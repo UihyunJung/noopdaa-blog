@@ -1,5 +1,5 @@
 {
-  "extends": "@noopdaa/config/tsconfig/base",
+  "extends": "@noopdaa/config/tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src"
