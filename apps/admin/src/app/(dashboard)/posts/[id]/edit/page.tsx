@@ -15,14 +15,15 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
       supabase.from("posts").select("*").eq("id", id).single(),
       supabase.from("categories").select("*").order("name"),
       supabase.from("tags").select("*").order("name"),
-      supabase.from("post_tags").select("tag_id").eq("post_id", id),
+      supabase.from("post_tags").select("tag_id, tags(name)").eq("post_id", id),
     ]);
 
   if (!post) {
     notFound();
   }
 
-  const selectedTagIds = postTags?.map((pt) => pt.tag_id) || [];
+  // 태그 ID 대신 태그 이름 목록 전달
+  const selectedTagNames = postTags?.map((pt: any) => pt.tags?.name).filter(Boolean) || [];
 
   return (
     <div className="space-y-6">
@@ -33,7 +34,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
         post={post}
         categories={categories || []}
         tags={tags || []}
-        selectedTagIds={selectedTagIds}
+        selectedTagNames={selectedTagNames}
       />
     </div>
   );

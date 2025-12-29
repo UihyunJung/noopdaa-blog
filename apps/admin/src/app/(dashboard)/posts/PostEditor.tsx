@@ -1,24 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
+import { TagInput } from "@/components/editor/TagInput";
 import type { Post, Category, Tag } from "@/lib/types";
 
 interface PostEditorProps {
   post?: Post;
   categories: Category[];
   tags: Tag[];
-  selectedTagIds?: string[];
+  selectedTagNames?: string[];
 }
 
 export function PostEditor({
   post,
   categories,
   tags,
-  selectedTagIds = [],
+  selectedTagNames = [],
 }: PostEditorProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +27,7 @@ export function PostEditor({
   const [content, setContent] = useState(post?.content || "");
   const [excerpt, setExcerpt] = useState(post?.excerpt || "");
   const [categoryId, setCategoryId] = useState(post?.category_id || "");
-  const [selectedTags, setSelectedTags] = useState<string[]>(selectedTagIds);
+  const [tagNames, setTagNames] = useState<string[]>(selectedTagNames);
   const [status, setStatus] = useState<"draft" | "published">(
     post?.status || "draft"
   );
@@ -35,6 +36,9 @@ export function PostEditor({
     post?.meta_description || ""
   );
   const [thumbnailUrl, setThumbnailUrl] = useState(post?.thumbnail_url || "");
+
+  // 기존 태그 이름 목록 (자동완성용)
+  const existingTagNames = tags.map((tag) => tag.name);
 
   const handleSubmit = async (submitStatus: "draft" | "published") => {
     if (!title.trim() || !content.trim()) {
@@ -95,28 +99,52 @@ export function PostEditor({
       postId = data.id;
     }
 
-    // 태그 업데이트
+    // 태그 처리: 없는 태그는 생성, 있는 태그는 연결
     await supabase.from("post_tags").delete().eq("post_id", postId!);
 
-    if (selectedTags.length > 0) {
-      await supabase.from("post_tags").insert(
-        selectedTags.map((tagId) => ({
-          post_id: postId!,
-          tag_id: tagId,
-        }))
-      );
+    if (tagNames.length > 0) {
+      const tagIds: string[] = [];
+
+      for (const tagName of tagNames) {
+        // 기존 태그 찾기
+        const existingTag = tags.find(
+          (t) => t.name.toLowerCase() === tagName.toLowerCase()
+        );
+
+        if (existingTag) {
+          tagIds.push(existingTag.id);
+        } else {
+          // 새 태그 생성
+          const slug = tagName
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9가-힣-]/g, "");
+
+          const { data: newTag } = await supabase
+            .from("tags")
+            .insert({ name: tagName, slug: slug || `tag-${Date.now()}` })
+            .select("id")
+            .single();
+
+          if (newTag) {
+            tagIds.push(newTag.id);
+          }
+        }
+      }
+
+      // 포스트-태그 연결
+      if (tagIds.length > 0) {
+        await supabase.from("post_tags").insert(
+          tagIds.map((tagId) => ({
+            post_id: postId!,
+            tag_id: tagId,
+          }))
+        );
+      }
     }
 
     router.push("/posts");
     router.refresh();
-  };
-
-  const toggleTag = (tagId: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tagId)
-        ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId]
-    );
   };
 
   return (
@@ -223,25 +251,12 @@ export function PostEditor({
           <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
             태그
           </h3>
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => toggleTag(tag.id)}
-                className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                  selectedTags.includes(tag.id)
-                    ? "bg-primary-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                }`}
-              >
-                {tag.name}
-              </button>
-            ))}
-            {tags.length === 0 && (
-              <p className="text-sm text-gray-500">태그가 없습니다.</p>
-            )}
-          </div>
+          <TagInput
+            value={tagNames}
+            onChange={setTagNames}
+            suggestions={existingTagNames}
+            placeholder="태그 입력 (Enter로 추가)"
+          />
         </Card>
 
         <Card>
