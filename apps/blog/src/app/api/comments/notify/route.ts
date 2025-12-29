@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 interface NotifyRequest {
   postId: string;
   postTitle: string;
@@ -13,6 +11,17 @@ interface NotifyRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.error("RESEND_API_KEY not configured");
+      return NextResponse.json(
+        { error: "Email service not configured" },
+        { status: 500 }
+      );
+    }
+
+    const resend = new Resend(apiKey);
+
     const body: NotifyRequest = await request.json();
     const { postId, postTitle, authorName, content, isReply } = body;
 
