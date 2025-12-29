@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
+import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import type { Post, Category, Tag } from "@/lib/types";
-
-const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
 interface PostEditorProps {
   post?: Post;
@@ -135,20 +133,11 @@ export function PostEditor({
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
             내용
           </label>
-          <div data-color-mode="light" className="dark:hidden">
-            <MDEditor
-              value={content}
-              onChange={(val) => setContent(val || "")}
-              height={500}
-            />
-          </div>
-          <div data-color-mode="dark" className="hidden dark:block">
-            <MDEditor
-              value={content}
-              onChange={(val) => setContent(val || "")}
-              height={500}
-            />
-          </div>
+          <MarkdownEditor
+            value={content}
+            onChange={setContent}
+            height={500}
+          />
         </div>
 
         <div>
