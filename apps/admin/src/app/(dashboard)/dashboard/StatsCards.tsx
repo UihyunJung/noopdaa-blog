@@ -1,6 +1,5 @@
 "use client";
 
-// turbo-ignore 테스트용 주석 (삭제 예정)
 import { Card } from "@noopdaa/ui";
 
 interface StatsCardsProps {
