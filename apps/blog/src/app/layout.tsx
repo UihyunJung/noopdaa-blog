@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import "./globals.scss";
 
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <PageViewTracker pageType="page" />
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />

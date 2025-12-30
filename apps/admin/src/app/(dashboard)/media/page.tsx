@@ -139,15 +139,15 @@ export default function MediaPage() {
           </p>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {media.map((item) => (
             <Card key={item.id} className="group relative overflow-hidden p-0">
-              <div className="relative aspect-square">
+              <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800">
                 <Image
                   src={item.url}
                   alt={item.filename}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                 />
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                   <Button

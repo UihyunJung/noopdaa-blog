@@ -108,6 +108,56 @@ export type Database = {
         }
         Relationships: []
       }
+      page_views: {
+        Row: {
+          id: string
+          page_path: string
+          page_type: string
+          post_id: string | null
+          visitor_id: string
+          ip_hash: string | null
+          referrer: string | null
+          user_agent: string | null
+          device_type: string | null
+          browser: string | null
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          page_path: string
+          page_type: string
+          post_id?: string | null
+          visitor_id: string
+          ip_hash?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          device_type?: string | null
+          browser?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          page_path?: string
+          page_type?: string
+          post_id?: string | null
+          visitor_id?: string
+          ip_hash?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          device_type?: string | null
+          browser?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_views_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       post_tags: {
         Row: {
           post_id: string
