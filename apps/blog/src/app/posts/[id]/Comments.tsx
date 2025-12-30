@@ -28,12 +28,15 @@ export function Comments({ postId, postTitle }: CommentsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
+  // 관리자 댓글 표시용 프로필 (모든 방문자에게 보여줌)
+  const [publicAdminProfile, setPublicAdminProfile] = useState<{ username: string; avatar_url: string | null } | null>(null);
 
   const supabase = createClient();
 
   useEffect(() => {
     loadComments();
     checkAdmin();
+    loadPublicAdminProfile();
   }, [postId]);
 
   const checkAdmin = async () => {
@@ -50,6 +53,22 @@ export function Comments({ postId, postTitle }: CommentsProps) {
         username: profile?.username || "관리자",
         email: user.email || "",
         avatar_url: profile?.avatar_url || null,
+      });
+    }
+  };
+
+  // 관리자 프로필을 공개적으로 조회 (모든 방문자가 관리자 댓글 아바타를 볼 수 있도록)
+  const loadPublicAdminProfile = async () => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .limit(1)
+      .single();
+
+    if (profile) {
+      setPublicAdminProfile({
+        username: profile.username,
+        avatar_url: profile.avatar_url,
       });
     }
   };
@@ -137,9 +156,9 @@ export function Comments({ postId, postTitle }: CommentsProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {comment.is_admin && (
-              adminProfile?.avatar_url ? (
+              publicAdminProfile?.avatar_url ? (
                 <Image
-                  src={adminProfile.avatar_url}
+                  src={publicAdminProfile.avatar_url}
                   alt={comment.author_name}
                   width={24}
                   height={24}

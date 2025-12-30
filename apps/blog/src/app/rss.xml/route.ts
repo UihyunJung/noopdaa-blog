@@ -4,12 +4,19 @@ export async function GET() {
   const supabase = await createServerClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000";
 
-  const { data: posts } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("status", "published")
-    .order("published_at", { ascending: false })
-    .limit(20);
+  // 사이트 설정과 포스트를 병렬로 가져오기
+  const [{ data: settings }, { data: posts }] = await Promise.all([
+    supabase.from("site_settings").select("site_name, site_description").single(),
+    supabase
+      .from("posts")
+      .select("*")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(20),
+  ]);
+
+  const siteName = settings?.site_name || "Noopdaa Blog";
+  const siteDescription = settings?.site_description || "Noopdaa Blog";
 
   const rssItems =
     posts
@@ -28,9 +35,9 @@ export async function GET() {
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Noopdaa Blog</title>
+    <title>${siteName}</title>
     <link>${siteUrl}</link>
-    <description>개발과 기술에 대한 이야기</description>
+    <description>${siteDescription}</description>
     <language>ko</language>
     <atom:link href="${siteUrl}/rss.xml" rel="self" type="application/rss+xml"/>
     ${rssItems}
