@@ -8,7 +8,6 @@ import type { Tag } from "@/lib/types";
 export default function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +30,7 @@ export default function TagsPage() {
 
     const tagData = {
       name,
-      slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
+      slug: name.toLowerCase().replace(/\s+/g, "-"),
     };
 
     if (editingId) {
@@ -41,7 +40,6 @@ export default function TagsPage() {
     }
 
     setName("");
-    setSlug("");
     setEditingId(null);
     setIsLoading(false);
     loadTags();
@@ -50,7 +48,6 @@ export default function TagsPage() {
   const handleEdit = (tag: Tag) => {
     setEditingId(tag.id);
     setName(tag.name);
-    setSlug(tag.slug);
   };
 
   const handleDelete = async (id: string) => {
@@ -62,7 +59,6 @@ export default function TagsPage() {
   const handleCancel = () => {
     setEditingId(null);
     setName("");
-    setSlug("");
   };
 
   return (
@@ -83,12 +79,6 @@ export default function TagsPage() {
               onChange={(e) => setName(e.target.value)}
               placeholder="태그 이름"
               required
-            />
-            <Input
-              label="슬러그"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="tag-slug"
             />
             <div className="flex gap-2">
               <Button type="submit" isLoading={isLoading}>

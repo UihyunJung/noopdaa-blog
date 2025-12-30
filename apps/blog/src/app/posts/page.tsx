@@ -33,6 +33,31 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     }
   }
 
+  // 태그 필터링
+  let tagFilteredPostIds: string[] | null = null;
+  if (params.tag) {
+    const { data: tag } = await supabase
+      .from("tags")
+      .select("id")
+      .eq("name", params.tag)
+      .single();
+
+    if (tag) {
+      const { data: postTags } = await supabase
+        .from("post_tags")
+        .select("post_id")
+        .eq("tag_id", tag.id);
+
+      tagFilteredPostIds = postTags?.map((pt) => pt.post_id) || [];
+      if (tagFilteredPostIds.length > 0) {
+        query = query.in("id", tagFilteredPostIds);
+      } else {
+        // 해당 태그의 포스트가 없으면 빈 결과
+        query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+      }
+    }
+  }
+
   if (params.q) {
     query = query.or(`title.ilike.%${params.q}%,content.ilike.%${params.q}%`);
   }
@@ -65,6 +90,23 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         <SearchBar defaultValue={params.q} />
       </div>
 
+      {params.tag && (
+        <div className="mt-4 flex items-center gap-2">
+          <span className="text-sm text-gray-500 dark:text-gray-400">태그:</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+            #{params.tag}
+            <a
+              href="/posts"
+              className="ml-1 rounded-full p-0.5 hover:bg-primary-200 dark:hover:bg-primary-800"
+            >
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </a>
+          </span>
+        </div>
+      )}
+
       {!posts || posts.length === 0 ? (
         <div className="mt-12 text-center">
           <p className="text-gray-500 dark:text-gray-400">
@@ -86,7 +128,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <a
                   key={p}
-                  href={`/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${params.q ? `&q=${params.q}` : ""}`}
+                  href={`/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${params.tag ? `&tag=${encodeURIComponent(params.tag)}` : ""}${params.q ? `&q=${params.q}` : ""}`}
                   className={`rounded-lg px-4 py-2 text-sm font-medium ${
                     p === page
                       ? "bg-primary-600 text-white"

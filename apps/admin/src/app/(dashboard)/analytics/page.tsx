@@ -1,7 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { AnalyticsOverview } from "./components/AnalyticsOverview";
 import { ViewsChart } from "./components/ViewsChart";
-import { TopPages } from "./components/TopPages";
 import { TopPosts } from "./components/TopPosts";
 import { ReferrerTable } from "./components/ReferrerTable";
 import { DeviceChart } from "./components/DeviceChart";
@@ -83,22 +82,6 @@ export default async function AnalyticsPage() {
       uniqueVisitors: stat.visitors.size,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
-
-  // 인기 페이지 TOP 10
-  const { data: pageViewsData } = await supabase
-    .from("page_views")
-    .select("page_path")
-    .gte("viewed_at", thirtyDaysAgoStr);
-
-  const pageStats = new Map<string, number>();
-  pageViewsData?.forEach((row) => {
-    pageStats.set(row.page_path, (pageStats.get(row.page_path) || 0) + 1);
-  });
-
-  const topPages = Array.from(pageStats.entries())
-    .map(([path, views]) => ({ path, views }))
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 10);
 
   // 인기 포스트 TOP 10
   const { data: postViewsData } = await supabase
@@ -213,11 +196,8 @@ export default async function AnalyticsPage() {
       {/* 트렌드 차트 */}
       <ViewsChart data={chartData} />
 
-      {/* 인기 페이지 & 포스트 */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <TopPages data={topPages} />
-        <TopPosts data={topPosts} />
-      </div>
+      {/* 인기 포스트 */}
+      <TopPosts data={topPosts} />
 
       {/* 유입 경로 & 디바이스/브라우저 */}
       <div className="grid gap-6 lg:grid-cols-2">

@@ -6,6 +6,7 @@ import { PostNavigation } from "./PostNavigation";
 import { Comments } from "./Comments";
 import { ShareButtons } from "./ShareButtons";
 import { TableOfContents } from "./TableOfContents";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import type { Post, Category } from "@/lib/types";
 
 type PostWithCategory = Post & { categories: Pick<Category, "name" | "slug"> | null };
@@ -71,6 +72,9 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const tags = postTags?.map((pt) => pt.tags).filter(Boolean) || [];
 
+  // 목차 존재 여부 확인 (## 또는 ### 헤딩이 있는지)
+  const hasTableOfContents = /^#{2,3}\s+.+$/m.test(post.content);
+
   // 이전/다음 포스트
   const [{ data: prevPost }, { data: nextPost }] = await Promise.all([
     supabase
@@ -93,6 +97,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <article className="mx-auto max-w-4xl px-4 py-12">
+      <PageViewTracker pageType="post" postId={post.id} />
       {/* Header */}
       <header className="mb-8 text-center">
         {post.categories && (
@@ -121,7 +126,7 @@ export default async function PostPage({ params }: PostPageProps) {
             {tags.map((tag: any) => (
               <a
                 key={tag.id}
-                href={`/posts?tag=${tag.slug}`}
+                href={`/posts?tag=${encodeURIComponent(tag.name)}`}
                 className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
               >
                 #{tag.name}
@@ -131,7 +136,7 @@ export default async function PostPage({ params }: PostPageProps) {
         )}
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_200px]">
+      <div className={hasTableOfContents ? "grid gap-8 lg:grid-cols-[1fr_220px]" : ""}>
         {/* Content */}
         <div>
           <PostContent content={post.content} />
@@ -143,12 +148,14 @@ export default async function PostPage({ params }: PostPageProps) {
           <Comments postId={post.id} postTitle={post.title} />
         </div>
 
-        {/* Sidebar */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-24">
-            <TableOfContents content={post.content} />
-          </div>
-        </aside>
+        {/* Sidebar - 목차가 있을 때만 표시 */}
+        {hasTableOfContents && (
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+              <TableOfContents content={post.content} />
+            </div>
+          </aside>
+        )}
       </div>
     </article>
   );

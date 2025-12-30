@@ -1,22 +1,43 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
+import { createServerClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import "./globals.scss";
 
-export const metadata: Metadata = {
-  title: {
-    default: "Noopdaa Blog",
-    template: "%s | Noopdaa Blog",
-  },
-  description: "개발과 기술에 대한 이야기",
-  openGraph: {
-    type: "website",
-    locale: "ko_KR",
-    siteName: "Noopdaa Blog",
-  },
-};
+interface SiteSettings {
+  site_name: string;
+  site_description: string | null;
+  og_image_url: string | null;
+}
+
+async function getSiteSettings(): Promise<SiteSettings | null> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("site_settings")
+    .select("site_name, site_description, og_image_url")
+    .single();
+  return data;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+
+  return {
+    title: {
+      default: settings?.site_name || "Noopdaa Blog",
+      template: `%s | ${settings?.site_name || "Noopdaa Blog"}`,
+    },
+    description: settings?.site_description || "",
+    openGraph: {
+      type: "website",
+      locale: "ko_KR",
+      siteName: settings?.site_name || "Noopdaa Blog",
+      images: settings?.og_image_url ? [settings.og_image_url] : undefined,
+    },
+  };
+}
 
 export default function RootLayout({
   children,

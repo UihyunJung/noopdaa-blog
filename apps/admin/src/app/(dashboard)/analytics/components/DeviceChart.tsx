@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card } from "@noopdaa/ui";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, Tooltip } from "recharts";
 
 interface DeviceChartProps {
   data: Array<{
@@ -13,7 +14,12 @@ interface DeviceChartProps {
 const COLORS = ["#8b5cf6", "#22c55e", "#f59e0b", "#6b7280"];
 
 export function DeviceChart({ data }: DeviceChartProps) {
+  const [mounted, setMounted] = useState(false);
   const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <Card className="p-4">
@@ -21,8 +27,8 @@ export function DeviceChart({ data }: DeviceChartProps) {
 
       {data.length > 0 && total > 0 ? (
         <div className="flex items-center gap-4">
-          <ResponsiveContainer width={120} height={120}>
-            <PieChart>
+          {mounted ? (
+            <PieChart width={120} height={120}>
               <Pie
                 data={data}
                 cx="50%"
@@ -45,7 +51,9 @@ export function DeviceChart({ data }: DeviceChartProps) {
                 }}
               />
             </PieChart>
-          </ResponsiveContainer>
+          ) : (
+            <div className="h-[120px] w-[120px]" />
+          )}
 
           <div className="flex-1 space-y-2">
             {data.map((item, index) => {

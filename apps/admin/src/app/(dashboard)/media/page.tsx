@@ -147,6 +147,7 @@ export default function MediaPage() {
                   src={item.url}
                   alt={item.filename}
                   fill
+                  sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 16vw"
                   className="object-contain"
                 />
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">

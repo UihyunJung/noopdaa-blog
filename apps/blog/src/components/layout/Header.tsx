@@ -1,13 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { cn } from "@noopdaa/ui";
+import { createClient } from "@/lib/supabase/client";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [siteName, setSiteName] = useState("눞다's Blog");
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    const loadSiteName = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("site_settings")
+        .select("site_name")
+        .single();
+      if (data?.site_name) {
+        setSiteName(data.site_name);
+      }
+    };
+    loadSiteName();
+  }, []);
 
   const navigation = [
     { name: "홈", href: "/" },
@@ -22,7 +38,7 @@ export function Header() {
             href="/"
             className="text-xl font-bold text-gray-900 dark:text-white"
           >
-            Noopdaa
+            {siteName}
           </Link>
 
           {/* Desktop Navigation */}

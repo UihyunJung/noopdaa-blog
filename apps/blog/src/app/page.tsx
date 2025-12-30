@@ -5,6 +5,12 @@ import type { Post, Category } from "@/lib/types";
 
 type PostWithCategory = Post & { categories: Pick<Category, "name" | "slug"> | null };
 
+interface SiteSettings {
+  site_name: string;
+  site_description: string | null;
+  hero_image_url: string | null;
+}
+
 export default async function HomePage() {
   const supabase = await createServerClient();
 
@@ -15,16 +21,31 @@ export default async function HomePage() {
     .order("published_at", { ascending: false })
     .limit(6) as { data: PostWithCategory[] | null };
 
+  const { data: settings } = await supabase
+    .from("site_settings")
+    .select("site_name, site_description, hero_image_url")
+    .single() as { data: SiteSettings | null };
+
+  const heroImageUrl = settings?.hero_image_url || "/images/bg.JPG";
+
   return (
     <div>
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-gray-50 to-white py-20 dark:from-gray-800 dark:to-gray-900">
-        <div className="mx-auto max-w-4xl px-4 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white sm:text-5xl">
-            Noopdaa Blog
+      <section className="relative overflow-hidden py-24">
+        {/* 배경 이미지 */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('${heroImageUrl}')` }}
+        />
+        {/* 오버레이 */}
+        <div className="absolute inset-0 bg-black/50" />
+        {/* 콘텐츠 */}
+        <div className="relative mx-auto max-w-4xl px-4 text-center">
+          <h1 className="text-4xl font-bold text-white sm:text-5xl">
+            {settings?.site_name || "눞다's Blog"}
           </h1>
-          <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-            개발과 기술에 대한 이야기를 나눕니다
+          <p className="mt-4 text-lg text-gray-200">
+            {settings?.site_description || ""}
           </p>
         </div>
       </section>

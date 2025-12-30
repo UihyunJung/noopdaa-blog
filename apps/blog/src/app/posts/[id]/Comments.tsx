@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Button, Input } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import type { Comment } from "@/lib/types";
@@ -12,6 +13,12 @@ interface CommentsProps {
 
 type CommentWithAdmin = Comment & { is_admin?: boolean };
 
+interface AdminProfile {
+  username: string;
+  email: string;
+  avatar_url: string | null;
+}
+
 export function Comments({ postId, postTitle }: CommentsProps) {
   const [comments, setComments] = useState<CommentWithAdmin[]>([]);
   const [name, setName] = useState("");
@@ -20,7 +27,7 @@ export function Comments({ postId, postTitle }: CommentsProps) {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminProfile, setAdminProfile] = useState<{ username: string; email: string } | null>(null);
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
 
   const supabase = createClient();
 
@@ -34,7 +41,7 @@ export function Comments({ postId, postTitle }: CommentsProps) {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("username")
+        .select("username, avatar_url")
         .eq("id", user.id)
         .single();
 
@@ -42,6 +49,7 @@ export function Comments({ postId, postTitle }: CommentsProps) {
       setAdminProfile({
         username: profile?.username || "관리자",
         email: user.email || "",
+        avatar_url: profile?.avatar_url || null,
       });
     }
   };
@@ -128,6 +136,21 @@ export function Comments({ postId, postTitle }: CommentsProps) {
       <div className={`rounded-lg p-4 ${comment.is_admin ? "bg-primary-50 dark:bg-primary-900/20" : "bg-gray-50 dark:bg-gray-800"}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
+            {comment.is_admin && (
+              adminProfile?.avatar_url ? (
+                <Image
+                  src={adminProfile.avatar_url}
+                  alt={comment.author_name}
+                  width={24}
+                  height={24}
+                  className="rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-600 text-xs font-medium text-white">
+                  {comment.author_name.charAt(0).toUpperCase()}
+                </div>
+              )
+            )}
             <span className="font-medium text-gray-900 dark:text-white">
               {comment.author_name}
             </span>
@@ -191,11 +214,27 @@ export function Comments({ postId, postTitle }: CommentsProps) {
 
         {isAdmin ? (
           <div className="flex items-center gap-2 rounded-lg bg-primary-50 px-4 py-2 dark:bg-primary-900/20">
+            {adminProfile?.avatar_url ? (
+              <Image
+                src={adminProfile.avatar_url}
+                alt={adminProfile.username}
+                width={24}
+                height={24}
+                className="rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-600 text-xs font-medium text-white">
+                {adminProfile?.username?.charAt(0)?.toUpperCase() || "?"}
+              </div>
+            )}
+            <span className="font-medium text-gray-900 dark:text-white">
+              {adminProfile?.username}
+            </span>
             <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white">
               관리자
             </span>
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              {adminProfile?.username}로 댓글 작성
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              로 댓글 작성
             </span>
           </div>
         ) : (

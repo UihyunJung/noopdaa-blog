@@ -64,6 +64,9 @@ export function TagInput({
 
   // 키보드 이벤트 처리
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // IME 조합 중에는 키 이벤트 무시 (한글 입력 시 중복 등록 방지)
+    if (e.nativeEvent.isComposing) return;
+
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       if (selectedSuggestionIndex >= 0 && filteredSuggestions[selectedSuggestionIndex]) {
