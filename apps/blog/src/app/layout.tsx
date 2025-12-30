@@ -36,6 +36,12 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: settings?.site_name || "Noopdaa Blog",
       images: settings?.og_image_url ? [settings.og_image_url] : undefined,
     },
+    twitter: {
+      card: "summary_large_image",
+      title: settings?.site_name || "Noopdaa Blog",
+      description: settings?.site_description || "",
+      images: settings?.og_image_url ? [settings.og_image_url] : undefined,
+    },
   };
 }
 
