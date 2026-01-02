@@ -3,6 +3,7 @@ import { PostCard } from "@/components/PostCard";
 import { SearchBar } from "@/components/SearchBar";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import type { Post, Category } from "@/lib/types";
+import { HiOutlineXMark, HiOutlineMagnifyingGlass, HiOutlineChevronRight } from "react-icons/hi2";
 
 type PostWithCategory = Post & { categories: Pick<Category, "name" | "slug"> | null };
 
@@ -52,7 +53,6 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       if (tagFilteredPostIds.length > 0) {
         query = query.in("id", tagFilteredPostIds);
       } else {
-        // 해당 태그의 포스트가 없으면 빈 결과
         query = query.eq("id", "00000000-0000-0000-0000-000000000000");
       }
     }
@@ -77,71 +77,107 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const totalPages = Math.ceil((count || 0) / perPage);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-        포스트
-      </h1>
-
-      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <CategoryFilter
-          categories={categories || []}
-          currentCategory={params.category}
-        />
-        <SearchBar defaultValue={params.q} />
-      </div>
-
-      {params.tag && (
-        <div className="mt-4 flex items-center gap-2">
-          <span className="text-sm text-gray-500 dark:text-gray-400">태그:</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-            #{params.tag}
-            <a
-              href="/posts"
-              className="ml-1 rounded-full p-0.5 hover:bg-primary-200 dark:hover:bg-primary-800"
-            >
-              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </a>
-          </span>
-        </div>
-      )}
-
-      {!posts || posts.length === 0 ? (
-        <div className="mt-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400">
-            {params.q
-              ? `"${params.q}"에 대한 검색 결과가 없습니다.`
-              : "포스트가 없습니다."}
+    <div className="min-h-screen">
+      {/* 헤더 영역 */}
+      <div className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white sm:text-4xl">
+            포스트
+          </h1>
+          <p className="mt-3 text-zinc-600 dark:text-zinc-400">
+            {count ? `${count}개의 글이 있습니다` : "아직 작성된 글이 없습니다"}
           </p>
         </div>
-      ) : (
-        <>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
+      </div>
 
-          {totalPages > 1 && (
-            <div className="mt-12 flex justify-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <a
-                  key={p}
-                  href={`/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${params.tag ? `&tag=${encodeURIComponent(params.tag)}` : ""}${params.q ? `&q=${params.q}` : ""}`}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                    p === page
-                      ? "bg-primary-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-                  }`}
-                >
-                  {p}
-                </a>
+      {/* 필터 영역 */}
+      <div className="sticky top-16 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/80">
+        <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CategoryFilter
+              categories={categories || []}
+              currentCategory={params.category}
+            />
+            <SearchBar defaultValue={params.q} />
+          </div>
+        </div>
+      </div>
+
+      {/* 콘텐츠 영역 */}
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+        {/* 태그 필터 표시 */}
+        {params.tag && (
+          <div className="mb-8 flex items-center gap-2">
+            <span className="text-sm text-zinc-500 dark:text-zinc-400">태그:</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-100 px-3 py-1.5 text-sm font-medium text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
+              #{params.tag}
+              <a
+                href="/posts"
+                className="rounded-full p-0.5 transition-colors hover:bg-primary-200 dark:hover:bg-primary-800"
+              >
+                <HiOutlineXMark className="h-3.5 w-3.5" />
+              </a>
+            </span>
+          </div>
+        )}
+
+        {/* 검색 결과 표시 */}
+        {params.q && (
+          <div className="mb-8">
+            <p className="text-zinc-600 dark:text-zinc-400">
+              <span className="font-medium text-zinc-900 dark:text-white">"{params.q}"</span>
+              {" "}검색 결과 {count || 0}건
+            </p>
+          </div>
+        )}
+
+        {!posts || posts.length === 0 ? (
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 py-20 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
+            <HiOutlineMagnifyingGlass className="mx-auto h-12 w-12 text-zinc-400" />
+            <p className="mt-4 text-zinc-500 dark:text-zinc-400">
+              {params.q
+                ? `"${params.q}"에 대한 검색 결과가 없습니다.`
+                : "포스트가 없습니다."}
+            </p>
+            {(params.q || params.category || params.tag) && (
+              <a
+                href="/posts"
+                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
+              >
+                전체 포스트 보기
+                <HiOutlineChevronRight className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} />
               ))}
             </div>
-          )}
-        </>
-      )}
+
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <div className="mt-12 flex justify-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <a
+                    key={p}
+                    href={`/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${params.tag ? `&tag=${encodeURIComponent(params.tag)}` : ""}${params.q ? `&q=${params.q}` : ""}`}
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-all ${
+                      p === page
+                        ? "bg-primary-600 text-white shadow-md shadow-primary-600/25"
+                        : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    }`}
+                  >
+                    {p}
+                  </a>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

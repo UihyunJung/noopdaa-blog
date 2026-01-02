@@ -8,6 +8,7 @@ import { ShareButtons } from "./ShareButtons";
 import { TableOfContents } from "./TableOfContents";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import type { Post, Category } from "@/lib/types";
+import { HiOutlineCalendarDays, HiOutlineEye } from "react-icons/hi2";
 
 type PostWithCategory = Post & { categories: Pick<Category, "name" | "slug"> | null };
 
@@ -96,66 +97,113 @@ export default async function PostPage({ params }: PostPageProps) {
   ]);
 
   return (
-    <article className="mx-auto max-w-4xl px-4 py-12">
+    <article className="min-h-screen">
       <PageViewTracker pageType="post" postId={post.id} />
-      {/* Header */}
-      <header className="mb-8 text-center">
-        {post.categories && (
-          <a
-            href={`/posts?category=${post.categories.slug}`}
-            className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
+
+      {/* 히어로 헤더 영역 */}
+      <header className="relative overflow-hidden border-b border-zinc-200 dark:border-zinc-800">
+        {/* 배경 이미지 (커버 이미지가 있는 경우) */}
+        {post.thumbnail_url ? (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${post.thumbnail_url})` }}
+            />
+            <div className="absolute inset-0 bg-zinc-900/50 backdrop-blur-sm" />
+          </>
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-zinc-50 dark:from-zinc-900 dark:via-zinc-900 dark:to-primary-950/20" />
+            <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary-200/30 blur-3xl dark:bg-primary-900/20" />
+            <div className="absolute -bottom-32 -left-32 h-64 w-64 rounded-full bg-primary-100/40 blur-3xl dark:bg-primary-800/10" />
+          </>
+        )}
+
+        <div className="relative mx-auto max-w-4xl px-4 py-12 text-center sm:px-6 sm:py-14">
+          {post.categories && (
+            <a
+              href={`/posts?category=${post.categories.slug}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                post.thumbnail_url
+                  ? "bg-primary-500/80 text-white hover:bg-primary-500"
+                  : "bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/40 dark:text-primary-300 dark:hover:bg-primary-900/60"
+              }`}
+            >
+              {post.categories.name}
+            </a>
+          )}
+          <h1
+            className={`mt-5 text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl ${
+              post.thumbnail_url ? "text-white" : "text-zinc-900 dark:text-white"
+            }`}
           >
-            {post.categories.name}
-          </a>
-        )}
-        <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-          {post.title}
-        </h1>
-        <div className="mt-4 flex items-center justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-          <time dateTime={post.published_at || post.created_at}>
-            {new Date(post.published_at || post.created_at).toLocaleDateString(
-              "ko-KR",
-              { year: "numeric", month: "long", day: "numeric" }
-            )}
-          </time>
-          <span>·</span>
-          <span>{post.view_count + 1} 조회</span>
-        </div>
-        {tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {tags.map((tag: any) => (
-              <a
-                key={tag.id}
-                href={`/posts?tag=${encodeURIComponent(tag.name)}`}
-                className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-              >
-                #{tag.name}
-              </a>
-            ))}
+            {post.title}
+          </h1>
+          <div
+            className={`mt-4 flex items-center justify-center gap-3 text-sm ${
+              post.thumbnail_url ? "text-zinc-200" : "text-zinc-500 dark:text-zinc-400"
+            }`}
+          >
+            <time dateTime={post.published_at || post.created_at} className="flex items-center gap-1.5">
+              <HiOutlineCalendarDays className="h-4 w-4" />
+              {new Date(post.published_at || post.created_at).toLocaleDateString(
+                "ko-KR",
+                { year: "numeric", month: "long", day: "numeric" }
+              )}
+            </time>
+            <span
+              className={`h-1 w-1 rounded-full ${
+                post.thumbnail_url ? "bg-zinc-400" : "bg-zinc-300 dark:bg-zinc-600"
+              }`}
+            />
+            <span className="flex items-center gap-1.5">
+              <HiOutlineEye className="h-4 w-4" />
+              {(post.view_count + 1).toLocaleString()} 조회
+            </span>
           </div>
-        )}
+          {tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {tags.map((tag: any) => (
+                <a
+                  key={tag.id}
+                  href={`/posts?tag=${encodeURIComponent(tag.name)}`}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
+                    post.thumbnail_url
+                      ? "bg-white/90 text-zinc-700 hover:bg-white"
+                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                  }`}
+                >
+                  #{tag.name}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
 
-      <div className={hasTableOfContents ? "grid gap-8 lg:grid-cols-[1fr_220px]" : ""}>
-        {/* Content */}
-        <div>
-          <PostContent content={post.content} />
+      {/* 본문 영역 */}
+      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+        <div className={hasTableOfContents ? "grid gap-12 lg:grid-cols-[1fr_240px]" : ""}>
+          {/* Content */}
+          <div className="min-w-0">
+            <PostContent content={post.content} />
 
-          <ShareButtons title={post.title} postId={post.id} />
+            <ShareButtons title={post.title} postId={post.id} />
 
-          <PostNavigation prevPost={prevPost} nextPost={nextPost} />
+            <PostNavigation prevPost={prevPost} nextPost={nextPost} />
 
-          <Comments postId={post.id} postTitle={post.title} />
+            <Comments postId={post.id} postTitle={post.title} />
+          </div>
+
+          {/* Sidebar - 목차가 있을 때만 표시 */}
+          {hasTableOfContents && (
+            <aside className="hidden lg:block">
+              <div className="sticky top-24">
+                <TableOfContents content={post.content} />
+              </div>
+            </aside>
+          )}
         </div>
-
-        {/* Sidebar - 목차가 있을 때만 표시 */}
-        {hasTableOfContents && (
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-              <TableOfContents content={post.content} />
-            </div>
-          </aside>
-        )}
       </div>
     </article>
   );

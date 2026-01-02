@@ -1,14 +1,28 @@
 "use client";
 
-import { useState, useRef } from "react";
-import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@noopdaa/ui";
-import { createClient } from "@/lib/supabase/client";
 import { MediaLibraryModal } from "./MediaLibraryModal";
+import {
+  HiOutlineXMark,
+  HiOutlineArrowUpTray,
+  HiOutlinePhoto,
+  HiOutlineLightBulb,
+} from "react-icons/hi2";
+import { ImSpinner8 } from "react-icons/im";
+
+// 썸네일 데이터 타입: 기존 URL 또는 새로 추가된 파일/blob
+export interface ThumbnailData {
+  type: "url" | "file" | "blob";
+  value: string; // URL 또는 미리보기용 object URL
+  file?: File; // type이 "file"일 때 원본 파일
+  blob?: Blob; // type이 "blob"일 때 원본 blob (AI 생성)
+  filename?: string; // 저장 시 사용할 파일명
+}
 
 interface ThumbnailPickerProps {
-  value: string;
-  onChange: (url: string) => void;
+  value: ThumbnailData | null;
+  onChange: (data: ThumbnailData | null) => void;
   markdownContent?: string; // AI 생성을 위한 마크다운 내용
 }
 
@@ -17,67 +31,63 @@ export function ThumbnailPicker({
   onChange,
   markdownContent = "",
 }: ThumbnailPickerProps) {
-  const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const supabase = createClient();
+  // 컴포넌트 언마운트 시 object URL 정리
+  useEffect(() => {
+    return () => {
+      if (value && (value.type === "file" || value.type === "blob")) {
+        URL.revokeObjectURL(value.value);
+      }
+    };
+  }, []);
 
-  // 파일 업로드 처리 (미디어에도 등록)
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 파일 선택 처리 (미리보기만, 저장 시 업로드)
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
     setError(null);
 
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
-      const filePath = `uploads/${fileName}`;
+    // 기존 object URL 정리
+    if (value && (value.type === "file" || value.type === "blob")) {
+      URL.revokeObjectURL(value.value);
+    }
 
-      // Supabase Storage에 업로드
-      const { error: uploadError } = await supabase.storage
-        .from("media")
-        .upload(filePath, file);
+    // 미리보기용 object URL 생성
+    const previewUrl = URL.createObjectURL(file);
 
-      if (uploadError) {
-        throw new Error("파일 업로드에 실패했습니다.");
-      }
+    onChange({
+      type: "file",
+      value: previewUrl,
+      file,
+      filename: file.name,
+    });
 
-      // Public URL 가져오기
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("media").getPublicUrl(filePath);
-
-      // 미디어 테이블에 등록
-      await supabase.from("media").insert({
-        filename: file.name,
-        url: publicUrl,
-        type: file.type,
-        size: file.size,
-      });
-
-      onChange(publicUrl);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "업로드 중 오류가 발생했습니다.");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
-  // 미디어 라이브러리에서 선택
-  const handleMediaSelect = (url: string) => {
-    onChange(url);
+  // 미디어 라이브러리에서 선택 (이미 등록된 URL)
+  const handleMediaSelect = (url: string, filename: string) => {
+    // 기존 object URL 정리
+    if (value && (value.type === "file" || value.type === "blob")) {
+      URL.revokeObjectURL(value.value);
+    }
+
+    onChange({
+      type: "url",
+      value: url,
+      filename,
+    });
     setIsMediaModalOpen(false);
   };
 
-  // AI 이미지 생성
+  // AI 이미지 생성 (미리보기만, 저장 시 업로드)
   const handleAIGenerate = async () => {
     if (!markdownContent.trim()) {
       setError("AI 이미지 생성을 위해 먼저 글 내용을 작성해주세요.");
@@ -101,8 +111,23 @@ export function ThumbnailPicker({
         throw new Error(data.error || "이미지 생성에 실패했습니다.");
       }
 
-      const { url } = await response.json();
-      onChange(url);
+      // blob으로 받아서 미리보기 생성
+      const blob = await response.blob();
+
+      // 기존 object URL 정리
+      if (value && (value.type === "file" || value.type === "blob")) {
+        URL.revokeObjectURL(value.value);
+      }
+
+      const previewUrl = URL.createObjectURL(blob);
+      const filename = `ai-thumbnail-${Date.now()}.png`;
+
+      onChange({
+        type: "blob",
+        value: previewUrl,
+        blob,
+        filename,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "AI 이미지 생성 중 오류가 발생했습니다.");
     } finally {
@@ -112,32 +137,39 @@ export function ThumbnailPicker({
 
   // 썸네일 제거
   const handleRemove = () => {
-    onChange("");
+    if (value && (value.type === "file" || value.type === "blob")) {
+      URL.revokeObjectURL(value.value);
+    }
+    onChange(null);
   };
+
+  const previewUrl = value?.value || "";
 
   return (
     <div className="space-y-4">
       {/* 썸네일 미리보기 */}
-      {value && (
+      {previewUrl && (
         <div className="relative">
           <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
-            <Image
-              src={value}
+            {/* object URL은 next/image에서 사용 불가하므로 img 태그 사용 */}
+            <img
+              src={previewUrl}
               alt="썸네일 미리보기"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 300px"
+              className="h-full w-full object-cover"
             />
           </div>
+          {value?.type !== "url" && (
+            <span className="absolute left-2 top-2 rounded bg-yellow-500 px-2 py-0.5 text-xs font-medium text-white">
+              미리보기
+            </span>
+          )}
           <button
             type="button"
             onClick={handleRemove}
             className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white shadow-lg hover:bg-red-600 transition-colors"
             title="썸네일 삭제"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <HiOutlineXMark className="h-4 w-4" />
           </button>
         </div>
       )}
@@ -149,44 +181,21 @@ export function ThumbnailPicker({
 
       {/* 선택 버튼들 */}
       <div className="flex flex-wrap gap-2">
-        {/* 파일 업로드 */}
+        {/* 파일 선택 */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          onChange={handleUpload}
+          onChange={handleFileSelect}
           className="hidden"
           id="thumbnail-upload"
         />
         <label
           htmlFor="thumbnail-upload"
-          className={`inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 ${
-            isUploading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
         >
-          {isUploading ? (
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          ) : (
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-          )}
-          업로드
+          <HiOutlineArrowUpTray className="h-4 w-4" />
+          파일 선택
         </label>
 
         {/* 미디어 라이브러리 */}
@@ -196,9 +205,7 @@ export function ThumbnailPicker({
           size="sm"
           onClick={() => setIsMediaModalOpen(true)}
         >
-          <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+          <HiOutlinePhoto className="mr-1.5 h-4 w-4" />
           미디어 선택
         </Button>
 
@@ -212,33 +219,16 @@ export function ThumbnailPicker({
           title={!markdownContent.trim() ? "글 내용을 먼저 작성해주세요" : "AI로 썸네일 생성"}
         >
           {isGenerating ? (
-            <svg className="mr-1.5 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
+            <ImSpinner8 className="mr-1.5 h-4 w-4 animate-spin" />
           ) : (
-            <svg className="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
+            <HiOutlineLightBulb className="mr-1.5 h-4 w-4" />
           )}
           AI 생성
         </Button>
       </div>
 
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        이미지를 직접 업로드하거나, 미디어 라이브러리에서 선택하거나, AI가 글 내용을 기반으로 생성할 수 있습니다.
+        파일 선택 또는 AI 생성 이미지는 포스트 저장 시 미디어에 등록됩니다.
       </p>
 
       {/* 미디어 선택 모달 */}

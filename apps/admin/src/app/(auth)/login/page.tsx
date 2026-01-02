@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button, Input } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,7 +8,6 @@ const SESSION_START_KEY = "admin_session_start";
 const LAST_ACTIVITY_KEY = "admin_last_activity";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,26 +18,31 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      console.error("Login error:", error);
-      setError(error.message || "이메일 또는 비밀번호가 올바르지 않습니다.");
+      if (authError) {
+        setError(authError.message || "이메일 또는 비밀번호가 올바르지 않습니다.");
+        setIsLoading(false);
+        return;
+      }
+
+      // 새 세션 시작 - 타이머 초기화
+      const now = Date.now().toString();
+      localStorage.setItem(SESSION_START_KEY, now);
+      localStorage.setItem(LAST_ACTIVITY_KEY, now);
+
+      // 전체 페이지 리로드로 세션 쿠키 반영
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      setError("로그인 중 오류가 발생했습니다.");
       setIsLoading(false);
-      return;
     }
-
-    // 새 세션 시작 - 타이머 초기화
-    const now = Date.now().toString();
-    localStorage.setItem(SESSION_START_KEY, now);
-    localStorage.setItem(LAST_ACTIVITY_KEY, now);
-
-    router.push("/dashboard");
-    router.refresh();
   };
 
   return (

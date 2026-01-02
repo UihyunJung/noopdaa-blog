@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import type { Media, MediaInsert } from "@/lib/types";
+import { ImSpinner8 } from "react-icons/im";
 
 export default function MediaPage() {
   const [media, setMedia] = useState<Media[]>([]);
@@ -109,22 +110,7 @@ export default function MediaPage() {
             className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {isUploading ? (
-              <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
+              <ImSpinner8 className="h-5 w-5 animate-spin" />
             ) : null}
             이미지 업로드
           </label>

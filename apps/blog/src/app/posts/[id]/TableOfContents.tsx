@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { HiOutlineListBullet } from "react-icons/hi2";
 
 interface Heading {
   id: string;
@@ -54,17 +55,22 @@ export function TableOfContents({ content }: TableOfContentsProps) {
   if (headings.length === 0) return null;
 
   return (
-    <nav className="text-sm">
-      <h4 className="mb-3 font-semibold text-gray-900 dark:text-white">목차</h4>
-      <ul className="space-y-2">
+    <nav className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-5 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-800/50">
+      <h4 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
+        <HiOutlineListBullet className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+        목차
+      </h4>
+      <ul className="mt-4 space-y-1 border-l-2 border-zinc-200 dark:border-zinc-700">
         {headings.map(({ id, text, level }) => (
-          <li key={id} className={level === 3 ? "ml-4" : ""}>
+          <li key={id}>
             <a
               href={`#${id}`}
-              className={`block text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white ${
+              className={`block border-l-2 py-1.5 text-sm transition-all ${
+                level === 3 ? "pl-6" : "pl-4"
+              } ${
                 activeId === id
-                  ? "font-medium text-primary-600 dark:text-primary-400"
-                  : ""
+                  ? "-ml-[2px] border-primary-600 font-medium text-primary-600 dark:border-primary-400 dark:text-primary-400"
+                  : "-ml-[2px] border-transparent text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-200"
               }`}
             >
               {text}

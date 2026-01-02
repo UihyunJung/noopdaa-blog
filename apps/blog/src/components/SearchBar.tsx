@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { HiOutlineMagnifyingGlass } from "react-icons/hi2";
 
 interface SearchBarProps {
   defaultValue?: string;
@@ -27,29 +28,19 @@ export function SearchBar({ defaultValue = "" }: SearchBarProps) {
     <form onSubmit={handleSubmit} className="relative">
       <input
         type="search"
-        placeholder="검색..."
+        placeholder="검색어를 입력하세요..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         disabled={isPending}
-        className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white sm:w-64"
+        className="w-full rounded-xl border-0 bg-zinc-100 py-3 pl-11 pr-4 text-sm text-zinc-900 placeholder-zinc-500 ring-1 ring-transparent transition-all focus:bg-white focus:ring-2 focus:ring-primary-500 disabled:opacity-50 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-400 dark:focus:bg-zinc-800 sm:w-72"
       />
-      {isPending ? (
-        <div className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
-      ) : (
-        <svg
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
-      )}
+      <div className="absolute left-4 top-1/2 -translate-y-1/2">
+        {isPending ? (
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
+        ) : (
+          <HiOutlineMagnifyingGlass className="h-4 w-4 text-zinc-400" />
+        )}
+      </div>
     </form>
   );
 }

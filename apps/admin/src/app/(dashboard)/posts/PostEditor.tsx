@@ -6,7 +6,7 @@ import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { TagInput } from "@/components/editor/TagInput";
-import { ThumbnailPicker } from "@/components/editor/ThumbnailPicker";
+import { ThumbnailPicker, type ThumbnailData } from "@/components/editor/ThumbnailPicker";
 import type { Post, Category, Tag } from "@/lib/types";
 
 interface PostEditorProps {
@@ -36,10 +36,56 @@ export function PostEditor({
   const [metaDescription, setMetaDescription] = useState(
     post?.meta_description || ""
   );
-  const [thumbnailUrl, setThumbnailUrl] = useState(post?.thumbnail_url || "");
+  const [thumbnailData, setThumbnailData] = useState<ThumbnailData | null>(
+    post?.thumbnail_url ? { type: "url", value: post.thumbnail_url } : null
+  );
 
   // 기존 태그 이름 목록 (자동완성용)
   const existingTagNames = tags.map((tag) => tag.name);
+
+  // 썸네일 업로드 (파일 또는 blob인 경우)
+  const uploadThumbnail = async (
+    supabase: ReturnType<typeof createClient>,
+    data: ThumbnailData
+  ): Promise<string | null> => {
+    // 이미 등록된 URL이면 그대로 반환
+    if (data.type === "url") {
+      return data.value;
+    }
+
+    // 파일 또는 blob 업로드
+    const fileToUpload = data.type === "file" ? data.file : data.blob;
+    if (!fileToUpload) return null;
+
+    const fileExt = data.type === "file" ? data.filename?.split(".").pop() : "png";
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("media")
+      .upload(filePath, fileToUpload);
+
+    if (uploadError) {
+      throw new Error("썸네일 업로드에 실패했습니다.");
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("media")
+      .getPublicUrl(filePath);
+
+    // 미디어 테이블에 등록
+    const size = fileToUpload instanceof File ? fileToUpload.size : fileToUpload.size;
+    const type = fileToUpload instanceof File ? fileToUpload.type : "image/png";
+
+    await supabase.from("media").insert({
+      filename: data.filename || fileName,
+      url: publicUrl,
+      type,
+      size,
+    });
+
+    return publicUrl;
+  };
 
   const handleSubmit = async (submitStatus: "draft" | "published") => {
     if (!title.trim() || !content.trim()) {
@@ -57,12 +103,24 @@ export function PostEditor({
       return;
     }
 
+    // 썸네일 업로드 처리
+    let thumbnailUrl: string | null = null;
+    if (thumbnailData) {
+      try {
+        thumbnailUrl = await uploadThumbnail(supabase, thumbnailData);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "썸네일 업로드 실패");
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const postData = {
       title,
       slug: post?.slug || `post-${Date.now().toString(36)}`,
       content,
       excerpt: excerpt || content.slice(0, 200),
-      thumbnail_url: thumbnailUrl || null,
+      thumbnail_url: thumbnailUrl,
       category_id: categoryId || null,
       author_id: user.id,
       status: submitStatus,
@@ -230,8 +288,8 @@ export function PostEditor({
             썸네일
           </h3>
           <ThumbnailPicker
-            value={thumbnailUrl}
-            onChange={setThumbnailUrl}
+            value={thumbnailData}
+            onChange={setThumbnailData}
             markdownContent={content}
           />
         </Card>

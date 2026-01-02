@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button, Card, Input } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
+import { ImSpinner8 } from "react-icons/im";
+import { HiOutlineXMark, HiOutlinePlus } from "react-icons/hi2";
 
 interface SiteSettings {
   id: string;
@@ -11,7 +13,15 @@ interface SiteSettings {
   site_description: string | null;
   hero_image_url: string | null;
   og_image_url: string | null;
+  hero_post_ids: string[] | null;
   updated_at: string;
+}
+
+interface Post {
+  id: string;
+  title: string;
+  thumbnail_url: string | null;
+  published_at: string | null;
 }
 
 export default function SettingsPage() {
@@ -26,25 +36,58 @@ export default function SettingsPage() {
   const heroInputRef = useRef<HTMLInputElement>(null);
   const ogInputRef = useRef<HTMLInputElement>(null);
 
+  // 히어로 포스트 관련 상태
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [heroPostIds, setHeroPostIds] = useState<string[]>([]);
+  const [heroPosts, setHeroPosts] = useState<Post[]>([]);
+  const [isPostSelectorOpen, setIsPostSelectorOpen] = useState(false);
+  const [isSavingHeroPosts, setIsSavingHeroPosts] = useState(false);
+
   const supabase = createClient();
 
   useEffect(() => {
     loadSettings();
+    loadPosts();
   }, []);
+
+  // 히어로 포스트 ID가 변경되면 해당 포스트 정보 로드
+  useEffect(() => {
+    if (heroPostIds.length > 0 && allPosts.length > 0) {
+      const posts = heroPostIds
+        .map((id) => allPosts.find((p) => p.id === id))
+        .filter(Boolean) as Post[];
+      setHeroPosts(posts);
+    } else {
+      setHeroPosts([]);
+    }
+  }, [heroPostIds, allPosts]);
 
   const loadSettings = async () => {
     setIsLoading(true);
     const { data } = await supabase
       .from("site_settings")
       .select("*")
-      .single();
+      .single() as { data: SiteSettings | null };
 
     if (data) {
       setSettings(data);
       setSiteName(data.site_name);
       setSiteDescription(data.site_description || "");
+      setHeroPostIds(data.hero_post_ids || []);
     }
     setIsLoading(false);
+  };
+
+  const loadPosts = async () => {
+    const { data } = await supabase
+      .from("posts")
+      .select("id, title, thumbnail_url, published_at")
+      .eq("status", "published")
+      .order("published_at", { ascending: false });
+
+    if (data) {
+      setAllPosts(data);
+    }
   };
 
   const handleSave = async () => {
@@ -137,6 +180,47 @@ export default function SettingsPage() {
       ogInputRef.current.value = "";
     }
   };
+
+  // 히어로 포스트 추가
+  const handleAddHeroPost = (postId: string) => {
+    if (heroPostIds.length >= 3) return;
+    if (heroPostIds.includes(postId)) return;
+    setHeroPostIds([...heroPostIds, postId]);
+    setIsPostSelectorOpen(false);
+  };
+
+  // 히어로 포스트 제거
+  const handleRemoveHeroPost = (postId: string) => {
+    setHeroPostIds(heroPostIds.filter((id) => id !== postId));
+  };
+
+  // 히어로 포스트 저장
+  const handleSaveHeroPosts = async () => {
+    if (!settings) return;
+
+    setIsSavingHeroPosts(true);
+    setMessage(null);
+
+    const { error } = await supabase
+      .from("site_settings")
+      .update({
+        hero_post_ids: heroPostIds.length > 0 ? heroPostIds : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", settings.id);
+
+    setIsSavingHeroPosts(false);
+
+    if (error) {
+      setMessage({ type: "error", text: "히어로 포스트 저장에 실패했습니다." });
+    } else {
+      setMessage({ type: "success", text: "히어로 포스트가 저장되었습니다." });
+      setSettings({ ...settings, hero_post_ids: heroPostIds.length > 0 ? heroPostIds : null });
+    }
+  };
+
+  // 선택 가능한 포스트 (이미 선택되지 않은 것들)
+  const availablePosts = allPosts.filter((post) => !heroPostIds.includes(post.id));
 
   const handleRemoveImage = async (type: "hero" | "og") => {
     if (!settings) return;
@@ -268,22 +352,7 @@ export default function SettingsPage() {
               className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:flex-none"
             >
               {isUploadingHero ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
+                <ImSpinner8 className="h-4 w-4 animate-spin" />
               ) : null}
               이미지 업로드
             </label>
@@ -300,6 +369,127 @@ export default function SettingsPage() {
         </div>
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
           홈페이지 Hero 섹션의 배경 이미지입니다. 권장 비율: 21:9
+        </p>
+      </Card>
+
+      {/* 히어로 포스트 */}
+      <Card className="p-4 sm:p-6">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          히어로 슬라이드 포스트
+        </h2>
+        <div className="space-y-4">
+          {/* 선택된 포스트 목록 */}
+          {heroPosts.length > 0 ? (
+            <div className="space-y-2">
+              {heroPosts.map((post, index) => (
+                <div
+                  key={post.id}
+                  className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+                >
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900 dark:text-primary-300">
+                    {index + 1}
+                  </span>
+                  {post.thumbnail_url ? (
+                    <div className="relative h-12 w-20 shrink-0 overflow-hidden rounded bg-gray-200 dark:bg-gray-700">
+                      <Image
+                        src={post.thumbnail_url}
+                        alt={post.title}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-12 w-20 shrink-0 items-center justify-center rounded bg-gray-200 text-xs text-gray-400 dark:bg-gray-700">
+                      No Image
+                    </div>
+                  )}
+                  <span className="flex-1 truncate text-sm font-medium text-gray-900 dark:text-white">
+                    {post.title}
+                  </span>
+                  <button
+                    onClick={() => handleRemoveHeroPost(post.id)}
+                    className="shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-red-500 dark:hover:bg-gray-700"
+                    title="제거"
+                  >
+                    <HiOutlineXMark className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 py-8 text-center dark:border-gray-600 dark:bg-gray-800">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                선택된 포스트가 없습니다
+              </p>
+            </div>
+          )}
+
+          {/* 포스트 추가 버튼 */}
+          {heroPostIds.length < 3 && (
+            <div className="relative">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPostSelectorOpen(!isPostSelectorOpen)}
+                className="w-full justify-center gap-2"
+              >
+                <HiOutlinePlus className="h-4 w-4" />
+                포스트 추가 ({heroPostIds.length}/3)
+              </Button>
+
+              {/* 포스트 선택 드롭다운 */}
+              {isPostSelectorOpen && (
+                <div className="absolute left-0 right-0 top-full z-10 mt-2 max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                  {availablePosts.length > 0 ? (
+                    availablePosts.map((post) => (
+                      <button
+                        key={post.id}
+                        onClick={() => handleAddHeroPost(post.id)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        {post.thumbnail_url ? (
+                          <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded bg-gray-200 dark:bg-gray-700">
+                            <Image
+                              src={post.thumbnail_url}
+                              alt={post.title}
+                              fill
+                              className="object-cover"
+                              sizes="64px"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-10 w-16 shrink-0 items-center justify-center rounded bg-gray-200 text-xs text-gray-400 dark:bg-gray-700">
+                            No Image
+                          </div>
+                        )}
+                        <span className="flex-1 truncate text-sm text-gray-900 dark:text-white">
+                          {post.title}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                      선택 가능한 포스트가 없습니다
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 저장 버튼 */}
+          <Button
+            onClick={handleSaveHeroPosts}
+            isLoading={isSavingHeroPosts}
+            disabled={JSON.stringify(heroPostIds) === JSON.stringify(settings?.hero_post_ids || [])}
+            className="w-full sm:w-auto"
+          >
+            히어로 포스트 저장
+          </Button>
+        </div>
+        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+          홈페이지 Hero 섹션에 슬라이드로 표시할 포스트를 선택하세요 (최대 3개). 포스트의 커버 이미지가 배경으로 사용됩니다.
         </p>
       </Card>
 
@@ -338,22 +528,7 @@ export default function SettingsPage() {
               className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:flex-none"
             >
               {isUploadingOg ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
+                <ImSpinner8 className="h-4 w-4 animate-spin" />
               ) : null}
               이미지 업로드
             </label>

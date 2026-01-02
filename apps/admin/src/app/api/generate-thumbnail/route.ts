@@ -92,37 +92,16 @@ export async function POST(request: NextRequest) {
     // 1. 콘텐츠에서 이미지 프롬프트 생성
     const imagePrompt = await generatePromptFromContent(content);
 
-    // 2. DALL-E로 이미지 생성
+    // 2. 이미지 생성 (저장하지 않고 바로 반환)
     const imageBuffer = await generateImage(imagePrompt);
 
-    // 3. Supabase Storage에 업로드
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
-    const filePath = `uploads/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("media")
-      .upload(filePath, imageBuffer, {
-        contentType: "image/png",
-      });
-
-    if (uploadError) {
-      throw new Error("이미지 업로드에 실패했습니다.");
-    }
-
-    // 4. Public URL 가져오기
-    const { data: { publicUrl } } = supabase.storage
-      .from("media")
-      .getPublicUrl(filePath);
-
-    // 5. 미디어 테이블에 등록
-    await supabase.from("media").insert({
-      filename: `AI Generated - ${fileName}`,
-      url: publicUrl,
-      type: "image/png",
-      size: imageBuffer.length,
+    // 이미지를 blob으로 반환 (저장은 포스트 저장 시 처리)
+    return new NextResponse(new Uint8Array(imageBuffer), {
+      headers: {
+        "Content-Type": "image/png",
+        "X-Image-Prompt": encodeURIComponent(imagePrompt),
+      },
     });
-
-    return NextResponse.json({ url: publicUrl, prompt: imagePrompt });
   } catch (error) {
     console.error("Thumbnail generation error:", error);
     return NextResponse.json(

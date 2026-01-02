@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import type { ICommand } from "@uiw/react-md-editor";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { MediaLibraryModal } from "./MediaLibraryModal";
+import { HiOutlinePhoto, HiOutlineSquares2X2 } from "react-icons/hi2";
+import { ImSpinner8 } from "react-icons/im";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
@@ -136,11 +138,7 @@ export function MarkdownEditor({
       "aria-label": "이미지 업로드",
       title: "이미지 업로드",
     },
-    icon: (
-      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-      </svg>
-    ),
+    icon: <HiOutlinePhoto style={{ width: 12, height: 12 }} />,
     execute: () => {
       const input = document.createElement("input");
       input.type = "file";
@@ -164,11 +162,7 @@ export function MarkdownEditor({
       "aria-label": "미디어 라이브러리",
       title: "미디어 라이브러리에서 선택",
     },
-    icon: (
-      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-        <path d="M20 4v12H8V4h12m0-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 9.67l1.69 2.26 2.48-3.1L19 15H9zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z" />
-      </svg>
-    ),
+    icon: <HiOutlineSquares2X2 style={{ width: 12, height: 12 }} />,
     execute: () => {
       setIsMediaLibraryOpen(true);
     },
@@ -193,22 +187,7 @@ export function MarkdownEditor({
       {/* 업로드 중 인디케이터 */}
       {uploadingCount > 0 && (
         <div className="absolute top-2 right-2 z-10 flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-sm text-white shadow-lg">
-          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
+          <ImSpinner8 className="h-4 w-4 animate-spin" />
           이미지 업로드 중... ({uploadingCount})
         </div>
       )}

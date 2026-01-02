@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { HiOutlineXMark } from "react-icons/hi2";
 
 interface TagInputProps {
   value: string[];
@@ -133,9 +134,7 @@ export function TagInput({
               }}
               className="ml-1 rounded-full p-0.5 hover:bg-primary-200 dark:hover:bg-primary-800"
             >
-              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <HiOutlineXMark className="h-3 w-3" />
             </button>
           </span>
         ))}

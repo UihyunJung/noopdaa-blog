@@ -1,6 +1,12 @@
 "use client";
 
 import { Card } from "@noopdaa/ui";
+import {
+  HiOutlineEye,
+  HiOutlineUsers,
+  HiOutlineArrowTrendingUp,
+  HiOutlineUser,
+} from "react-icons/hi2";
 
 interface AnalyticsOverviewProps {
   totalViews: number;
@@ -25,19 +31,19 @@ export function AnalyticsOverview({
     {
       name: "총 페이지뷰",
       value: totalViews.toLocaleString(),
-      icon: EyeIcon,
+      icon: HiOutlineEye,
       color: "blue",
     },
     {
       name: "총 방문자",
       value: totalUniqueVisitors.toLocaleString(),
-      icon: UsersIcon,
+      icon: HiOutlineUsers,
       color: "green",
     },
     {
       name: "오늘 페이지뷰",
       value: todayViews.toLocaleString(),
-      icon: TrendingUpIcon,
+      icon: HiOutlineArrowTrendingUp,
       color: "purple",
     },
     {
@@ -45,7 +51,7 @@ export function AnalyticsOverview({
       value: todayUniqueVisitors.toLocaleString(),
       subValue: changePercent !== 0 ? `어제 대비 ${changePercent > 0 ? "+" : ""}${changePercent}%` : undefined,
       subValueColor: changePercent >= 0 ? "text-green-500" : "text-red-500",
-      icon: UserIcon,
+      icon: HiOutlineUser,
       color: "orange",
     },
   ];
@@ -77,58 +83,5 @@ export function AnalyticsOverview({
         </Card>
       ))}
     </div>
-  );
-}
-
-function EyeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-      />
-    </svg>
-  );
-}
-
-function UsersIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-      />
-    </svg>
-  );
-}
-
-function TrendingUpIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-    </svg>
-  );
-}
-
-function UserIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-      />
-    </svg>
   );
 }

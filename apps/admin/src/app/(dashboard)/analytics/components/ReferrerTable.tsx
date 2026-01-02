@@ -1,6 +1,10 @@
 "use client";
 
 import { Card } from "@noopdaa/ui";
+import { FaGoogle } from "react-icons/fa6";
+import { SiNaver } from "react-icons/si";
+import { FaXTwitter, FaFacebookF, FaGithub } from "react-icons/fa6";
+import { HiOutlineGlobeAlt, HiOutlineLink } from "react-icons/hi2";
 
 interface ReferrerTableProps {
   data: Array<{
@@ -46,28 +50,22 @@ export function ReferrerTable({ data }: ReferrerTableProps) {
 }
 
 function SourceIcon({ source }: { source: string }) {
-  const getColor = () => {
-    switch (source.toLowerCase()) {
-      case "google":
-        return "text-blue-500";
-      case "naver":
-        return "text-green-500";
-      case "twitter":
-        return "text-sky-500";
-      case "facebook":
-        return "text-indigo-500";
-      case "github":
-        return "text-gray-700 dark:text-gray-300";
-      case "direct":
-        return "text-purple-500";
-      default:
-        return "text-gray-400";
-    }
-  };
+  const lowerSource = source.toLowerCase();
 
-  return (
-    <svg className={`h-4 w-4 ${getColor()}`} fill="currentColor" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" />
-    </svg>
-  );
+  switch (lowerSource) {
+    case "google":
+      return <FaGoogle className="h-4 w-4 text-blue-500" />;
+    case "naver":
+      return <SiNaver className="h-4 w-4 text-green-500" />;
+    case "twitter":
+      return <FaXTwitter className="h-4 w-4 text-sky-500" />;
+    case "facebook":
+      return <FaFacebookF className="h-4 w-4 text-indigo-500" />;
+    case "github":
+      return <FaGithub className="h-4 w-4 text-gray-700 dark:text-gray-300" />;
+    case "direct":
+      return <HiOutlineLink className="h-4 w-4 text-purple-500" />;
+    default:
+      return <HiOutlineGlobeAlt className="h-4 w-4 text-gray-400" />;
+  }
 }
