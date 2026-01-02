@@ -45,12 +45,12 @@ export default function CommentsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
         댓글 관리
       </h1>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant={filter === "all" ? "primary" : "outline"}
           size="sm"
@@ -82,9 +82,9 @@ export default function CommentsPage() {
         <div className="space-y-4">
           {comments.map((comment) => (
             <Card key={comment.id}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="mb-2 flex items-center gap-2">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
                     <span className="font-medium text-gray-900 dark:text-white">
                       {comment.author_name}
                     </span>
@@ -97,11 +97,11 @@ export default function CommentsPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mb-2 text-gray-700 dark:text-gray-300">
+                  <p className="mb-2 break-words text-gray-700 dark:text-gray-300">
                     {comment.content}
                   </p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="truncate">
                       포스트: {comment.posts?.title || "삭제된 포스트"}
                     </span>
                     <span>
@@ -109,7 +109,7 @@ export default function CommentsPage() {
                     </span>
                   </div>
                 </div>
-                <div className="ml-4 flex gap-2">
+                <div className="flex shrink-0 gap-2">
                   {!comment.is_approved && (
                     <Button
                       variant="outline"

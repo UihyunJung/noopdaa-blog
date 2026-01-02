@@ -78,13 +78,11 @@ export default function ProfilePage() {
     const fileName = `avatar-${profile.id}-${Date.now()}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
 
-    // 기존 아바타 삭제
     if (profile.avatar_url) {
       const oldPath = profile.avatar_url.split("/").slice(-2).join("/");
       await supabase.storage.from("media").remove([oldPath]);
     }
 
-    // 새 아바타 업로드
     const { error: uploadError } = await supabase.storage
       .from("media")
       .upload(filePath, file);
@@ -99,7 +97,6 @@ export default function ProfilePage() {
       .from("media")
       .getPublicUrl(filePath);
 
-    // 프로필 업데이트
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ avatar_url: publicUrl })
@@ -126,11 +123,9 @@ export default function ProfilePage() {
     setIsUploading(true);
     setMessage(null);
 
-    // 스토리지에서 파일 삭제
     const oldPath = profile.avatar_url.split("/").slice(-2).join("/");
     await supabase.storage.from("media").remove([oldPath]);
 
-    // 프로필 업데이트
     const { error } = await supabase
       .from("profiles")
       .update({ avatar_url: null })
@@ -155,8 +150,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
         프로필 설정
       </h1>
 
@@ -173,12 +168,12 @@ export default function ProfilePage() {
       )}
 
       {/* 아바타 섹션 */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
           프로필 사진
         </h2>
-        <div className="flex items-center gap-6">
-          <div className="relative h-24 w-24 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
             {profile?.avatar_url ? (
               <Image
                 src={profile.avatar_url}
@@ -244,11 +239,11 @@ export default function ProfilePage() {
       </Card>
 
       {/* 닉네임 섹션 */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
           닉네임
         </h2>
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
           <div className="flex-1">
             <Input
               value={username}
@@ -260,6 +255,7 @@ export default function ProfilePage() {
             onClick={handleSaveUsername}
             isLoading={isSaving}
             disabled={!username.trim() || username === profile?.username}
+            className="w-full sm:w-auto"
           >
             저장
           </Button>
@@ -270,7 +266,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* 계정 정보 */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
           계정 정보
         </h2>

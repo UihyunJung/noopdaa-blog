@@ -62,12 +62,12 @@ export default function TagsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
         태그 관리
       </h1>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">
             {editingId ? "태그 수정" : "새 태그"}
@@ -81,7 +81,7 @@ export default function TagsPage() {
               required
             />
             <div className="flex gap-2">
-              <Button type="submit" isLoading={isLoading}>
+              <Button type="submit" isLoading={isLoading} className="flex-1 sm:flex-none">
                 {editingId ? "수정" : "추가"}
               </Button>
               {editingId && (
@@ -109,7 +109,7 @@ export default function TagsPage() {
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {tag.name}
                   </span>
-                  <div className="hidden gap-1 group-hover:flex">
+                  <div className="flex gap-1 sm:hidden sm:group-hover:flex">
                     <button
                       onClick={() => handleEdit(tag)}
                       className="text-gray-500 hover:text-primary-600"

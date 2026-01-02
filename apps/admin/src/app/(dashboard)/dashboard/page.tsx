@@ -7,7 +7,6 @@ import { PopularPosts } from "./PopularPosts";
 export default async function DashboardPage() {
   const supabase = await createServerClient();
 
-  // 오늘과 어제 날짜
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
   const yesterday = new Date(today);
@@ -28,19 +27,16 @@ export default async function DashboardPage() {
       .from("posts")
       .select("view_count")
       .eq("status", "published"),
-    // 오늘 페이지뷰
     supabase
       .from("page_views")
       .select("*", { count: "exact", head: true })
       .gte("viewed_at", `${todayStr}T00:00:00`)
       .lt("viewed_at", `${todayStr}T23:59:59`),
-    // 어제 페이지뷰
     supabase
       .from("page_views")
       .select("*", { count: "exact", head: true })
       .gte("viewed_at", `${yesterdayStr}T00:00:00`)
       .lt("viewed_at", `${yesterdayStr}T23:59:59`),
-    // 오늘 순 방문자
     supabase
       .from("page_views")
       .select("visitor_id")
@@ -52,8 +48,8 @@ export default async function DashboardPage() {
   const todayUniqueVisitors = new Set(todayVisitorData?.map((v) => v.visitor_id)).size;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
         대시보드
       </h1>
 
@@ -66,7 +62,7 @@ export default async function DashboardPage() {
         yesterdayPageViews={yesterdayPageViews || 0}
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>인기 포스트</CardTitle>

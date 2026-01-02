@@ -30,17 +30,17 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   const totalPages = Math.ceil((count || 0) / perPage);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
           포스트
         </h1>
         <Link href="/posts/new">
-          <Button>새 포스트</Button>
+          <Button className="w-full sm:w-auto">새 포스트</Button>
         </Link>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Link href="/posts?status=all">
           <Button variant={status === "all" ? "primary" : "outline"} size="sm">
             전체
@@ -61,7 +61,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       <PostsTable posts={posts || []} />
 
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <Link key={p} href={`/posts?page=${p}&status=${status}`}>
               <Button variant={p === page ? "primary" : "outline"} size="sm">

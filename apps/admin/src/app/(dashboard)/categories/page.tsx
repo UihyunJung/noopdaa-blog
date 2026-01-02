@@ -76,12 +76,12 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
         카테고리 관리
       </h1>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">
             {editingId ? "카테고리 수정" : "새 카테고리"}
@@ -113,7 +113,7 @@ export default function CategoriesPage() {
               />
             </div>
             <div className="flex gap-2">
-              <Button type="submit" isLoading={isLoading}>
+              <Button type="submit" isLoading={isLoading} className="flex-1 sm:flex-none">
                 {editingId ? "수정" : "추가"}
               </Button>
               {editingId && (
@@ -138,9 +138,9 @@ export default function CategoriesPage() {
               {categories.map((category) => (
                 <li
                   key={category.id}
-                  className="flex items-center justify-between py-3"
+                  className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white">
                       {category.name}
                     </p>
@@ -148,11 +148,12 @@ export default function CategoriesPage() {
                       /{category.slug}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(category)}
+                      className="flex-1 sm:flex-none"
                     >
                       수정
                     </Button>
@@ -160,6 +161,7 @@ export default function CategoriesPage() {
                       variant="danger"
                       size="sm"
                       onClick={() => handleDelete(category.id)}
+                      className="flex-1 sm:flex-none"
                     >
                       삭제
                     </Button>

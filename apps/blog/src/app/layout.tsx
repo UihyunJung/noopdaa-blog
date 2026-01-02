@@ -23,6 +23,7 @@ async function getSiteSettings(): Promise<SiteSettings | null> {
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000";
 
   return {
     title: {
@@ -30,9 +31,14 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${settings?.site_name || "Noopdaa Blog"}`,
     },
     description: settings?.site_description || "",
+    metadataBase: new URL(siteUrl),
+    alternates: {
+      canonical: "/",
+    },
     openGraph: {
       type: "website",
       locale: "ko_KR",
+      url: siteUrl,
       siteName: settings?.site_name || "Noopdaa Blog",
       images: settings?.og_image_url ? [settings.og_image_url] : undefined,
     },
@@ -41,6 +47,12 @@ export async function generateMetadata(): Promise<Metadata> {
       title: settings?.site_name || "Noopdaa Blog",
       description: settings?.site_description || "",
       images: settings?.og_image_url ? [settings.og_image_url] : undefined,
+    },
+    verification: {
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+      other: {
+        "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || "",
+      },
     },
   };
 }

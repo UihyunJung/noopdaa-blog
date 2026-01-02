@@ -12,38 +12,32 @@ export const dynamic = "force-dynamic";
 export default async function AnalyticsPage() {
   const supabase = await createServerClient();
 
-  // 오늘과 어제 날짜
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split("T")[0];
 
-  // 30일 전 날짜
   const thirtyDaysAgo = new Date(today);
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
 
-  // 총 페이지뷰
   const { count: totalViews } = await supabase
     .from("page_views")
     .select("*", { count: "exact", head: true });
 
-  // 오늘 페이지뷰
   const { count: todayViews } = await supabase
     .from("page_views")
     .select("*", { count: "exact", head: true })
     .gte("viewed_at", `${todayStr}T00:00:00`)
     .lt("viewed_at", `${todayStr}T23:59:59`);
 
-  // 어제 페이지뷰
   const { count: yesterdayViews } = await supabase
     .from("page_views")
     .select("*", { count: "exact", head: true })
     .gte("viewed_at", `${yesterdayStr}T00:00:00`)
     .lt("viewed_at", `${yesterdayStr}T23:59:59`);
 
-  // 오늘 순 방문자
   const { data: todayUniqueData } = await supabase
     .from("page_views")
     .select("visitor_id")
@@ -52,17 +46,14 @@ export default async function AnalyticsPage() {
 
   const todayUniqueVisitors = new Set(todayUniqueData?.map((v) => v.visitor_id)).size;
 
-  // 총 순 방문자 (IP 해시 기반)
   const { data: uniqueData } = await supabase.from("page_views").select("ip_hash");
   const totalUniqueVisitors = new Set(uniqueData?.map((v) => v.ip_hash)).size;
 
-  // 일별 통계 (최근 30일)
   const { data: dailyData } = await supabase
     .from("page_views")
     .select("viewed_at, visitor_id")
     .gte("viewed_at", thirtyDaysAgoStr);
 
-  // 일별 데이터 집계
   const dailyStats = new Map<string, { views: number; visitors: Set<string> }>();
   dailyData?.forEach((row) => {
     const date = row.viewed_at.split("T")[0] ?? "";
@@ -83,7 +74,6 @@ export default async function AnalyticsPage() {
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // 인기 포스트 TOP 10
   const { data: postViewsData } = await supabase
     .from("page_views")
     .select("post_id, posts(id, title)")
@@ -106,7 +96,6 @@ export default async function AnalyticsPage() {
     .sort((a, b) => b.views - a.views)
     .slice(0, 10);
 
-  // 레퍼러 통계
   const { data: referrerData } = await supabase
     .from("page_views")
     .select("referrer")
@@ -123,7 +112,6 @@ export default async function AnalyticsPage() {
     .sort((a, b) => b.views - a.views)
     .slice(0, 10);
 
-  // 디바이스 통계
   const { data: deviceData } = await supabase
     .from("page_views")
     .select("device_type")
@@ -140,7 +128,6 @@ export default async function AnalyticsPage() {
     value,
   }));
 
-  // 브라우저 통계
   const { data: browserData } = await supabase
     .from("page_views")
     .select("browser")
@@ -156,7 +143,6 @@ export default async function AnalyticsPage() {
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
-  // 시간대별 통계 (최근 7일)
   const sevenDaysAgo = new Date(today);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
@@ -178,13 +164,12 @@ export default async function AnalyticsPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">통계</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">통계</h1>
         <span className="text-sm text-gray-500 dark:text-gray-400">최근 30일 기준</span>
       </div>
 
-      {/* 요약 카드 */}
       <AnalyticsOverview
         totalViews={totalViews || 0}
         totalUniqueVisitors={totalUniqueVisitors}
@@ -193,28 +178,23 @@ export default async function AnalyticsPage() {
         yesterdayViews={yesterdayViews || 0}
       />
 
-      {/* 트렌드 차트 */}
       <ViewsChart data={chartData} />
 
-      {/* 인기 포스트 */}
       <TopPosts data={topPosts} />
 
-      {/* 유입 경로 & 디바이스/브라우저 */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <ReferrerTable data={referrers} />
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <DeviceChart data={devices} />
           <BrowserChart data={browsers} />
         </div>
       </div>
 
-      {/* 시간대별 통계 */}
       <HourlyChart data={hourlyChartData} />
     </div>
   );
 }
 
-// 레퍼러 도메인 추출 함수
 function parseReferrerDomain(referrer: string | null): string {
   if (!referrer) return "Direct";
 

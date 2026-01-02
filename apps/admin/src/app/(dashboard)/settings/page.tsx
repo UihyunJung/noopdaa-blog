@@ -94,13 +94,11 @@ export default function SettingsPage() {
     const fileName = `${type}-${Date.now()}.${fileExt}`;
     const filePath = `site/${fileName}`;
 
-    // 기존 이미지 삭제
     if (currentUrl) {
       const oldPath = currentUrl.split("/").slice(-2).join("/");
       await supabase.storage.from("media").remove([oldPath]);
     }
 
-    // 새 이미지 업로드
     const { error: uploadError } = await supabase.storage
       .from("media")
       .upload(filePath, file);
@@ -115,7 +113,6 @@ export default function SettingsPage() {
       .from("media")
       .getPublicUrl(filePath);
 
-    // 설정 업데이트
     const { error: updateError } = await supabase
       .from("site_settings")
       .update({
@@ -133,7 +130,6 @@ export default function SettingsPage() {
       setSettings({ ...settings, [fieldName]: publicUrl });
     }
 
-    // input 초기화
     if (type === "hero" && heroInputRef.current) {
       heroInputRef.current.value = "";
     }
@@ -154,11 +150,9 @@ export default function SettingsPage() {
 
     setMessage(null);
 
-    // 스토리지에서 파일 삭제
     const oldPath = currentUrl.split("/").slice(-2).join("/");
     await supabase.storage.from("media").remove([oldPath]);
 
-    // 설정 업데이트
     const { error } = await supabase
       .from("site_settings")
       .update({
@@ -184,8 +178,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
         블로그 설정
       </h1>
 
@@ -202,7 +196,7 @@ export default function SettingsPage() {
       )}
 
       {/* 기본 정보 */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
           기본 정보
         </h2>
@@ -229,6 +223,7 @@ export default function SettingsPage() {
             onClick={handleSave}
             isLoading={isSaving}
             disabled={!siteName.trim()}
+            className="w-full sm:w-auto"
           >
             저장
           </Button>
@@ -239,7 +234,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* 메인 이미지 */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
           메인 이미지 (Hero 배경)
         </h2>
@@ -259,7 +254,7 @@ export default function SettingsPage() {
               <span className="text-gray-400">이미지 없음</span>
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               ref={heroInputRef}
               type="file"
@@ -270,7 +265,7 @@ export default function SettingsPage() {
             />
             <label
               htmlFor="hero-upload"
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+              className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:flex-none"
             >
               {isUploadingHero ? (
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
@@ -296,6 +291,7 @@ export default function SettingsPage() {
               <Button
                 variant="secondary"
                 onClick={() => handleRemoveImage("hero")}
+                className="flex-1 sm:flex-none"
               >
                 삭제
               </Button>
@@ -308,27 +304,27 @@ export default function SettingsPage() {
       </Card>
 
       {/* OG 이미지 */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
           OG 이미지 (소셜 공유용)
         </h2>
         <div className="space-y-4">
           {settings?.og_image_url ? (
-            <div className="relative aspect-[1200/630] max-w-md overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
+            <div className="relative aspect-[1200/630] overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700 sm:max-w-md">
               <Image
                 src={settings.og_image_url}
                 alt="OG 이미지"
                 fill
-                sizes="400px"
+                sizes="(max-width: 640px) 100vw, 400px"
                 className="object-contain"
               />
             </div>
           ) : (
-            <div className="flex aspect-[1200/630] max-w-md items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800">
+            <div className="flex aspect-[1200/630] items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800 sm:max-w-md">
               <span className="text-gray-400">이미지 없음</span>
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               ref={ogInputRef}
               type="file"
@@ -339,7 +335,7 @@ export default function SettingsPage() {
             />
             <label
               htmlFor="og-upload"
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+              className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:flex-none"
             >
               {isUploadingOg ? (
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
@@ -365,6 +361,7 @@ export default function SettingsPage() {
               <Button
                 variant="secondary"
                 onClick={() => handleRemoveImage("og")}
+                className="flex-1 sm:flex-none"
               >
                 삭제
               </Button>

@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button, Input } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 
+const SESSION_START_KEY = "admin_session_start";
+const LAST_ACTIVITY_KEY = "admin_last_activity";
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -29,6 +32,11 @@ export default function LoginPage() {
       setIsLoading(false);
       return;
     }
+
+    // 새 세션 시작 - 타이머 초기화
+    const now = Date.now().toString();
+    localStorage.setItem(SESSION_START_KEY, now);
+    localStorage.setItem(LAST_ACTIVITY_KEY, now);
 
     router.push("/dashboard");
     router.refresh();
@@ -77,6 +85,10 @@ export default function LoginPage() {
             로그인
           </Button>
         </form>
+
+        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+          30분간 활동이 없거나 8시간이 지나면 자동 로그아웃됩니다.
+        </p>
       </div>
     </div>
   );

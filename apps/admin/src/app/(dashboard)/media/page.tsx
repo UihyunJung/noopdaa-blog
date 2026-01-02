@@ -68,7 +68,6 @@ export default function MediaPage() {
   const handleDelete = async (item: Media) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
-    // URL에서 파일 경로 추출
     const urlParts = item.url.split("/");
     const filePath = `uploads/${urlParts[urlParts.length - 1]}`;
 
@@ -90,9 +89,9 @@ export default function MediaPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
           미디어 관리
         </h1>
         <div>
@@ -107,7 +106,7 @@ export default function MediaPage() {
           />
           <label
             htmlFor="file-upload"
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {isUploading ? (
               <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
@@ -139,7 +138,7 @@ export default function MediaPage() {
           </p>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {media.map((item) => (
             <Card key={item.id} className="group relative overflow-hidden p-0">
               <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800">
@@ -147,7 +146,7 @@ export default function MediaPage() {
                   src={item.url}
                   alt={item.filename}
                   fill
-                  sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 16vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                   className="object-contain"
                 />
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
@@ -167,8 +166,8 @@ export default function MediaPage() {
                   </Button>
                 </div>
               </div>
-              <div className="p-3">
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+              <div className="p-2 sm:p-3">
+                <p className="truncate text-xs font-medium text-gray-900 dark:text-white sm:text-sm">
                   {item.filename}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
