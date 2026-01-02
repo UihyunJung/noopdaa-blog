@@ -6,6 +6,7 @@ import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { TagInput } from "@/components/editor/TagInput";
+import { ThumbnailPicker } from "@/components/editor/ThumbnailPicker";
 import type { Post, Category, Tag } from "@/lib/types";
 
 interface PostEditorProps {
@@ -228,23 +229,11 @@ export function PostEditor({
           <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
             썸네일
           </h3>
-          <Input
+          <ThumbnailPicker
             value={thumbnailUrl}
-            onChange={(e) => setThumbnailUrl(e.target.value)}
-            placeholder="이미지 URL을 입력하세요"
+            onChange={setThumbnailUrl}
+            markdownContent={content}
           />
-          {thumbnailUrl && (
-            <div className="mt-2 overflow-hidden rounded-lg">
-              <img
-                src={thumbnailUrl}
-                alt="썸네일 미리보기"
-                className="w-full object-cover"
-              />
-            </div>
-          )}
-          <p className="mt-2 text-xs text-gray-500">
-            미디어 관리에서 업로드 후 URL을 복사해서 붙여넣으세요
-          </p>
         </Card>
 
         <Card>
