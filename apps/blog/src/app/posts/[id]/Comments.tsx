@@ -20,6 +20,124 @@ interface AdminProfile {
   avatar_url: string | null;
 }
 
+// CommentForm을 외부로 분리하여 리렌더링 시 unmount 방지
+interface CommentFormProps {
+  parentId?: string | null;
+  onCancel: () => void;
+  onSubmit: (e: React.FormEvent, parentId: string | null) => void;
+  formRef?: React.RefObject<HTMLFormElement | null>;
+  isAdmin: boolean;
+  adminProfile: AdminProfile | null;
+  name: string;
+  setName: (value: string) => void;
+  email: string;
+  setEmail: (value: string) => void;
+  content: string;
+  setContent: (value: string) => void;
+  isSubmitting: boolean;
+}
+
+function CommentForm({
+  parentId = null,
+  onCancel,
+  onSubmit,
+  formRef,
+  isAdmin,
+  adminProfile,
+  name,
+  setName,
+  email,
+  setEmail,
+  content,
+  setContent,
+  isSubmitting,
+}: CommentFormProps) {
+  return (
+    <form
+      ref={formRef}
+      onSubmit={(e) => onSubmit(e, parentId)}
+      className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-zinc-900 dark:text-white">
+          {parentId ? "답글 작성" : "댓글 작성"}
+        </h3>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+        >
+          취소
+        </button>
+      </div>
+
+      {isAdmin ? (
+        <div className="flex items-center gap-3 rounded-xl border border-primary-200 bg-primary-50/50 px-4 py-3 dark:border-primary-800 dark:bg-primary-900/20">
+          {adminProfile?.avatar_url ? (
+            <Image
+              src={adminProfile.avatar_url}
+              alt={adminProfile.username}
+              width={32}
+              height={32}
+              className="rounded-full object-cover ring-2 ring-primary-500/20"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-medium text-white shadow-md shadow-primary-500/25">
+              {adminProfile?.username?.charAt(0)?.toUpperCase() || "?"}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-zinc-900 dark:text-white">
+              {adminProfile?.username}
+            </span>
+            <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+              관리자
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="이름"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="이름을 입력하세요"
+            required
+          />
+          <Input
+            type="email"
+            label="이메일"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="이메일을 입력하세요"
+            required
+          />
+        </div>
+      )}
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          내용
+        </label>
+        <textarea
+          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500"
+          rows={3}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder={parentId ? "답글을 작성하세요" : "댓글을 작성하세요"}
+          required
+        />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="submit" isLoading={isSubmitting}>
+          {parentId ? "답글 작성" : "댓글 작성"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export function Comments({ postId, postTitle }: CommentsProps) {
   const [comments, setComments] = useState<CommentWithAdmin[]>([]);
   const [name, setName] = useState("");
@@ -96,6 +214,9 @@ export function Comments({ postId, postTitle }: CommentsProps) {
   const handleSubmit = async (e: React.FormEvent, parentId: string | null = null) => {
     e.preventDefault();
 
+    // 중복 클릭 방지
+    if (isSubmitting) return;
+
     const authorName = isAdmin ? adminProfile?.username || "관리자" : name;
     const authorEmail = isAdmin ? adminProfile?.email || "" : email;
 
@@ -104,74 +225,77 @@ export function Comments({ postId, postTitle }: CommentsProps) {
 
     setIsSubmitting(true);
 
-    const { data: newComment, error } = await supabase
-      .from("comments")
-      .insert({
-        post_id: postId,
-        parent_id: parentId,
-        author_name: authorName,
-        author_email: authorEmail,
-        content,
-        is_approved: true,
-        is_admin: isAdmin,
-      })
-      .select()
-      .single();
+    try {
+      const { data: newComment, error } = await supabase
+        .from("comments")
+        .insert({
+          post_id: postId,
+          parent_id: parentId,
+          author_name: authorName,
+          author_email: authorEmail,
+          content,
+          is_approved: true,
+          is_admin: isAdmin,
+        })
+        .select()
+        .single();
 
-    setIsSubmitting(false);
-
-    if (error) {
-      alert("댓글 작성에 실패했습니다.");
-      return;
-    }
-
-    // 관리자가 아닌 경우에만 이메일 알림 발송
-    if (!isAdmin && postTitle) {
-      try {
-        await fetch("/api/comments/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            postId,
-            postTitle,
-            authorName,
-            content,
-            isReply: !!parentId,
-          }),
-        });
-      } catch (e) {
-        console.error("Failed to send notification:", e);
+      if (error) {
+        alert("댓글 작성에 실패했습니다.");
+        return;
       }
-    }
 
-    // 폼 초기화
-    setContent("");
-    setReplyTo(null);
-    setShowCommentForm(false);
-
-    if (!isAdmin) {
-      setName("");
-      setEmail("");
-    }
-
-    // 댓글 목록 새로고침 후 하이라이트
-    await loadComments();
-
-    if (newComment?.id) {
-      setHighlightedCommentId(newComment.id);
-
-      // 새 댓글로 스크롤
-      setTimeout(() => {
-        const commentElement = document.getElementById(`comment-${newComment.id}`);
-        if (commentElement) {
-          commentElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      // 관리자가 아닌 경우에만 이메일 알림 발송
+      if (!isAdmin && postTitle) {
+        try {
+          await fetch("/api/comments/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              postId,
+              postTitle,
+              authorName,
+              content,
+              isReply: !!parentId,
+            }),
+          });
+        } catch (e) {
+          console.error("Failed to send notification:", e);
         }
-      }, 100);
+      }
 
-      // 2초 후 하이라이트 제거
-      setTimeout(() => {
-        setHighlightedCommentId(null);
-      }, 2000);
+      // 폼 초기화
+      setContent("");
+      setReplyTo(null);
+      setShowCommentForm(false);
+
+      if (!isAdmin) {
+        setName("");
+        setEmail("");
+      }
+
+      // 댓글 목록 새로고침 후 하이라이트
+      await loadComments();
+
+      if (newComment?.id) {
+        setHighlightedCommentId(newComment.id);
+
+        // 새 댓글로 스크롤
+        setTimeout(() => {
+          const commentElement = document.getElementById(`comment-${newComment.id}`);
+          if (commentElement) {
+            commentElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 100);
+
+        // 2초 후 하이라이트 제거
+        setTimeout(() => {
+          setHighlightedCommentId(null);
+        }, 2000);
+      }
+    } finally {
+      // 모든 작업 완료 후 로딩 상태 해제
+      setIsSubmitting(false);
     }
   };
 
@@ -202,100 +326,19 @@ export function Comments({ postId, postTitle }: CommentsProps) {
   const getReplies = (parentId: string) =>
     comments.filter((c) => c.parent_id === parentId);
 
-  // 댓글 작성 폼 컴포넌트
-  const CommentForm = ({
-    parentId = null,
-    onCancel,
-    formRef
-  }: {
-    parentId?: string | null;
-    onCancel: () => void;
-    formRef?: React.RefObject<HTMLFormElement | null>;
-  }) => (
-    <form
-      ref={formRef}
-      onSubmit={(e) => handleSubmit(e, parentId)}
-      className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
-    >
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-zinc-900 dark:text-white">
-          {parentId ? "답글 작성" : "댓글 작성"}
-        </h3>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-        >
-          취소
-        </button>
-      </div>
-
-      {isAdmin ? (
-        <div className="flex items-center gap-3 rounded-xl border border-primary-200 bg-primary-50/50 px-4 py-3 dark:border-primary-800 dark:bg-primary-900/20">
-          {adminProfile?.avatar_url ? (
-            <Image
-              src={adminProfile.avatar_url}
-              alt={adminProfile.username}
-              width={32}
-              height={32}
-              className="rounded-full object-cover ring-2 ring-primary-500/20"
-            />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-medium text-white shadow-md shadow-primary-500/25">
-              {adminProfile?.username?.charAt(0)?.toUpperCase() || "?"}
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-zinc-900 dark:text-white">
-              {adminProfile?.username}
-            </span>
-            <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
-              관리자
-            </span>
-          </div>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="이름"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="이름을 입력하세요"
-            required
-          />
-          <Input
-            type="email"
-            label="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="이메일을 입력하세요"
-            required
-          />
-        </div>
-      )}
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          내용
-        </label>
-        <textarea
-          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500"
-          rows={3}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={parentId ? "답글을 작성하세요" : "댓글을 작성하세요"}
-          required
-          autoFocus
-        />
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="submit" isLoading={isSubmitting}>
-          {parentId ? "답글 작성" : "댓글 작성"}
-        </Button>
-      </div>
-    </form>
-  );
+  // CommentForm에 전달할 공통 props
+  const commentFormProps = {
+    isAdmin,
+    adminProfile,
+    name,
+    setName,
+    email,
+    setEmail,
+    content,
+    setContent,
+    isSubmitting,
+    onSubmit: handleSubmit,
+  };
 
   const renderComment = (comment: CommentWithAdmin, depth = 0) => {
     const isHighlighted = highlightedCommentId === comment.id;
@@ -368,6 +411,7 @@ export function Comments({ postId, postTitle }: CommentsProps) {
         {replyTo === comment.id && (
           <div className="mt-4">
             <CommentForm
+              {...commentFormProps}
               parentId={comment.id}
               onCancel={handleCancelReply}
               formRef={replyFormRef}
@@ -413,6 +457,7 @@ export function Comments({ postId, postTitle }: CommentsProps) {
       {showCommentForm && (
         <div className="mt-6">
           <CommentForm
+            {...commentFormProps}
             onCancel={handleCancelComment}
             formRef={commentFormRef}
           />
