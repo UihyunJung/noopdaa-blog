@@ -62,9 +62,19 @@ packages/
 - `react-markdown` + `remark-gfm` + `rehype-highlight`
 - `highlight.js`로 코드 하이라이팅
 
+**로딩 상태 처리:**
+- 페이지 이동: Next.js `loading.tsx` 파일 사용
+- 컴포넌트 로딩: `LoadingSpinner` 컴포넌트 (`@/components/LoadingSpinner`)
+- 버튼 로딩: `Button`의 `isLoading` prop 사용
+- 삭제/수정 작업: 개별 항목 ID로 로딩 상태 추적 (`deletingId`, `actionLoading`)
+
+**폼 컴포넌트 주의사항:**
+- 폼 컴포넌트는 부모 컴포넌트 외부에 정의 (내부 정의 시 상태 변경마다 remount되어 입력 포커스 유실)
+- 비동기 작업 시 중복 클릭 방지: `if (isSubmitting) return;` + `try-finally`로 상태 관리
+
 ## 데이터베이스 스키마
 
-테이블: `posts`, `categories`, `tags`, `post_tags`, `comments`, `media`, `profiles`
+테이블: `posts`, `categories`, `tags`, `post_tags`, `comments`, `media`, `profiles`, `page_views`, `site_settings`
 
 스토리지: `media` 버킷 (경로: `uploads/{timestamp}-{random}.{ext}`)
 
