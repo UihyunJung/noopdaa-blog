@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@noopdaa/ui";
@@ -12,13 +13,19 @@ interface PostsTableProps {
 
 export function PostsTable({ posts }: PostsTableProps) {
   const router = useRouter();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
-    const supabase = createClient();
-    await supabase.from("posts").delete().eq("id", id);
-    router.refresh();
+    setDeletingId(id);
+    try {
+      const supabase = createClient();
+      await supabase.from("posts").delete().eq("id", id);
+      router.refresh();
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (posts.length === 0) {
@@ -72,6 +79,8 @@ export function PostsTable({ posts }: PostsTableProps) {
                 variant="danger"
                 size="sm"
                 onClick={() => handleDelete(post.id)}
+                isLoading={deletingId === post.id}
+                disabled={deletingId !== null}
               >
                 삭제
               </Button>
@@ -147,6 +156,8 @@ export function PostsTable({ posts }: PostsTableProps) {
                       variant="danger"
                       size="sm"
                       onClick={() => handleDelete(post.id)}
+                      isLoading={deletingId === post.id}
+                      disabled={deletingId !== null}
                     >
                       삭제
                     </Button>

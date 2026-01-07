@@ -3,14 +3,18 @@
 import { useState, useEffect } from "react";
 import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import type { Tag } from "@/lib/types";
 import { HiOutlinePencilSquare, HiOutlineXMark } from "react-icons/hi2";
+import { ImSpinner8 } from "react-icons/im";
 
 export default function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [name, setName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -19,8 +23,13 @@ export default function TagsPage() {
   }, []);
 
   const loadTags = async () => {
-    const { data } = await supabase.from("tags").select("*").order("name") as { data: Tag[] | null };
-    setTags(data || []);
+    setIsPageLoading(true);
+    try {
+      const { data } = await supabase.from("tags").select("*").order("name") as { data: Tag[] | null };
+      setTags(data || []);
+    } finally {
+      setIsPageLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,8 +62,13 @@ export default function TagsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
-    await supabase.from("tags").delete().eq("id", id);
-    loadTags();
+    setDeletingId(id);
+    try {
+      await supabase.from("tags").delete().eq("id", id);
+      await loadTags();
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleCancel = () => {
@@ -98,7 +112,11 @@ export default function TagsPage() {
           <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">
             태그 목록
           </h2>
-          {tags.length === 0 ? (
+          {isPageLoading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner />
+            </div>
+          ) : tags.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400">태그가 없습니다.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -114,14 +132,20 @@ export default function TagsPage() {
                     <button
                       onClick={() => handleEdit(tag)}
                       className="text-gray-500 hover:text-primary-600"
+                      disabled={deletingId !== null}
                     >
                       <HiOutlinePencilSquare className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(tag.id)}
-                      className="text-gray-500 hover:text-red-600"
+                      className="text-gray-500 hover:text-red-600 disabled:opacity-50"
+                      disabled={deletingId !== null}
                     >
-                      <HiOutlineXMark className="h-4 w-4" />
+                      {deletingId === tag.id ? (
+                        <ImSpinner8 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <HiOutlineXMark className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>

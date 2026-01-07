@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import type { Comment, Post } from "@/lib/types";
 
 type CommentWithPost = Comment & { posts: Pick<Post, "title"> | null };
@@ -10,6 +11,8 @@ type CommentWithPost = Comment & { posts: Pick<Post, "title"> | null };
 export default function CommentsPage() {
   const [comments, setComments] = useState<CommentWithPost[]>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "approved">("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -18,30 +21,45 @@ export default function CommentsPage() {
   }, [filter]);
 
   const loadComments = async () => {
-    let query = supabase
-      .from("comments")
-      .select("*, posts(title)")
-      .order("created_at", { ascending: false });
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from("comments")
+        .select("*, posts(title)")
+        .order("created_at", { ascending: false });
 
-    if (filter === "pending") {
-      query = query.eq("is_approved", false);
-    } else if (filter === "approved") {
-      query = query.eq("is_approved", true);
+      if (filter === "pending") {
+        query = query.eq("is_approved", false);
+      } else if (filter === "approved") {
+        query = query.eq("is_approved", true);
+      }
+
+      const { data } = await query;
+      setComments((data as CommentWithPost[]) || []);
+    } finally {
+      setIsLoading(false);
     }
-
-    const { data } = await query;
-    setComments((data as CommentWithPost[]) || []);
   };
 
   const handleApprove = async (id: string) => {
-    await supabase.from("comments").update({ is_approved: true }).eq("id", id);
-    loadComments();
+    setActionLoading(id);
+    try {
+      await supabase.from("comments").update({ is_approved: true }).eq("id", id);
+      await loadComments();
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
-    await supabase.from("comments").delete().eq("id", id);
-    loadComments();
+    setActionLoading(id);
+    try {
+      await supabase.from("comments").delete().eq("id", id);
+      await loadComments();
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   return (
@@ -74,7 +92,11 @@ export default function CommentsPage() {
         </Button>
       </div>
 
-      {comments.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
+      ) : comments.length === 0 ? (
         <Card className="py-12 text-center">
           <p className="text-gray-500 dark:text-gray-400">댓글이 없습니다.</p>
         </Card>
@@ -115,6 +137,8 @@ export default function CommentsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleApprove(comment.id)}
+                      isLoading={actionLoading === comment.id}
+                      disabled={actionLoading !== null}
                     >
                       승인
                     </Button>
@@ -123,6 +147,8 @@ export default function CommentsPage() {
                     variant="danger"
                     size="sm"
                     onClick={() => handleDelete(comment.id)}
+                    isLoading={actionLoading === comment.id}
+                    disabled={actionLoading !== null}
                   >
                     삭제
                   </Button>

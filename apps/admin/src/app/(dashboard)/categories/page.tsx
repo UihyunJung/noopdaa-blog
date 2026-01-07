@@ -1,19 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import type { Category } from "@/lib/types";
 
 export default function CategoriesPage() {
-  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -22,11 +23,16 @@ export default function CategoriesPage() {
   }, []);
 
   const loadCategories = async () => {
-    const { data } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name") as { data: Category[] | null };
-    setCategories(data || []);
+    setIsPageLoading(true);
+    try {
+      const { data } = await supabase
+        .from("categories")
+        .select("*")
+        .order("name") as { data: Category[] | null };
+      setCategories(data || []);
+    } finally {
+      setIsPageLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,8 +70,13 @@ export default function CategoriesPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
-    await supabase.from("categories").delete().eq("id", id);
-    loadCategories();
+    setDeletingId(id);
+    try {
+      await supabase.from("categories").delete().eq("id", id);
+      await loadCategories();
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleCancel = () => {
@@ -129,7 +140,11 @@ export default function CategoriesPage() {
           <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">
             카테고리 목록
           </h2>
-          {categories.length === 0 ? (
+          {isPageLoading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner />
+            </div>
+          ) : categories.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400">
               카테고리가 없습니다.
             </p>
@@ -162,6 +177,8 @@ export default function CategoriesPage() {
                       size="sm"
                       onClick={() => handleDelete(category.id)}
                       className="flex-1 sm:flex-none"
+                      isLoading={deletingId === category.id}
+                      disabled={deletingId !== null}
                     >
                       삭제
                     </Button>

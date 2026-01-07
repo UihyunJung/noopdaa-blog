@@ -4,12 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import type { Media, MediaInsert } from "@/lib/types";
 import { ImSpinner8 } from "react-icons/im";
 
 export default function MediaPage() {
   const [media, setMedia] = useState<Media[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supabase = createClient();
@@ -19,11 +22,16 @@ export default function MediaPage() {
   }, []);
 
   const loadMedia = async () => {
-    const { data } = await supabase
-      .from("media")
-      .select("*")
-      .order("created_at", { ascending: false }) as { data: Media[] | null };
-    setMedia(data || []);
+    setIsLoading(true);
+    try {
+      const { data } = await supabase
+        .from("media")
+        .select("*")
+        .order("created_at", { ascending: false }) as { data: Media[] | null };
+      setMedia(data || []);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,13 +77,18 @@ export default function MediaPage() {
   const handleDelete = async (item: Media) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
-    const urlParts = item.url.split("/");
-    const filePath = `uploads/${urlParts[urlParts.length - 1]}`;
+    setDeletingId(item.id);
+    try {
+      const urlParts = item.url.split("/");
+      const filePath = `uploads/${urlParts[urlParts.length - 1]}`;
 
-    await supabase.storage.from("media").remove([filePath]);
-    await supabase.from("media").delete().eq("id", item.id);
+      await supabase.storage.from("media").remove([filePath]);
+      await supabase.from("media").delete().eq("id", item.id);
 
-    loadMedia();
+      await loadMedia();
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const copyToClipboard = (url: string) => {
@@ -117,7 +130,11 @@ export default function MediaPage() {
         </div>
       </div>
 
-      {media.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
+      ) : media.length === 0 ? (
         <Card className="py-12 text-center">
           <p className="text-gray-500 dark:text-gray-400">
             업로드된 미디어가 없습니다.
@@ -147,6 +164,8 @@ export default function MediaPage() {
                     variant="danger"
                     size="sm"
                     onClick={() => handleDelete(item)}
+                    isLoading={deletingId === item.id}
+                    disabled={deletingId !== null}
                   >
                     삭제
                   </Button>
