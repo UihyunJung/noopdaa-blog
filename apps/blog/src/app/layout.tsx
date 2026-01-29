@@ -32,9 +32,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: settings?.site_description || "",
     metadataBase: new URL(siteUrl),
-    alternates: {
-      canonical: "/",
-    },
     openGraph: {
       type: "website",
       locale: "ko_KR",

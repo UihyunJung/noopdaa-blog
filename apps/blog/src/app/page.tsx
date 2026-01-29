@@ -1,9 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createServerClient } from "@/lib/supabase/server";
 import { PostCard } from "@/components/PostCard";
 import { HeroSection } from "@/components/HeroSection";
 import type { Post, Category } from "@/lib/types";
 import { HiOutlineChevronRight, HiOutlineDocumentText } from "react-icons/hi2";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
 
 type PostWithCategory = Post & { categories: Pick<Category, "name" | "slug"> | null };
 
