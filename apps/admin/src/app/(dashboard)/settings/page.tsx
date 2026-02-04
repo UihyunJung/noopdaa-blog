@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Button, Card, Input } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { ImSpinner8 } from "react-icons/im";
-import { HiOutlineXMark, HiOutlinePlus } from "react-icons/hi2";
+import { HiOutlineXMark, HiOutlinePlus, HiOutlineBars2 } from "react-icons/hi2";
 
 interface SiteSettings {
   id: string;
@@ -42,6 +42,10 @@ export default function SettingsPage() {
   const [heroPosts, setHeroPosts] = useState<Post[]>([]);
   const [isPostSelectorOpen, setIsPostSelectorOpen] = useState(false);
   const [isSavingHeroPosts, setIsSavingHeroPosts] = useState(false);
+
+  // 드래그 앤 드롭 상태
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const supabase = createClient();
 
@@ -192,6 +196,49 @@ export default function SettingsPage() {
   // 히어로 포스트 제거
   const handleRemoveHeroPost = (postId: string) => {
     setHeroPostIds(heroPostIds.filter((id) => id !== postId));
+  };
+
+  // 드래그 앤 드롭 핸들러
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newHeroPostIds = [...heroPostIds];
+    const draggedId = newHeroPostIds.splice(draggedIndex, 1)[0];
+    if (!draggedId) return;
+    newHeroPostIds.splice(dropIndex, 0, draggedId);
+
+    setHeroPostIds(newHeroPostIds);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   // 히어로 포스트 저장
@@ -384,8 +431,24 @@ export default function SettingsPage() {
               {heroPosts.map((post, index) => (
                 <div
                   key={post.id}
-                  className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`flex items-center gap-3 rounded-lg border p-3 transition-all duration-200 ${
+                    draggedIndex === index
+                      ? "opacity-50 border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700"
+                      : dragOverIndex === index
+                        ? "border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/20"
+                        : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
+                  }`}
                 >
+                  {/* 드래그 핸들 */}
+                  <div className="shrink-0 cursor-grab text-gray-400 hover:text-gray-600 active:cursor-grabbing dark:hover:text-gray-300">
+                    <HiOutlineBars2 className="h-5 w-5" />
+                  </div>
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900 dark:text-primary-300">
                     {index + 1}
                   </span>
@@ -489,7 +552,7 @@ export default function SettingsPage() {
           </Button>
         </div>
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          홈페이지 Hero 섹션에 슬라이드로 표시할 포스트를 선택하세요 (최대 3개). 포스트의 커버 이미지가 배경으로 사용됩니다.
+          홈페이지 Hero 섹션에 슬라이드로 표시할 포스트를 선택하세요 (최대 3개). 드래그하여 순서를 변경할 수 있습니다. 포스트의 커버 이미지가 배경으로 사용됩니다.
         </p>
       </Card>
 
