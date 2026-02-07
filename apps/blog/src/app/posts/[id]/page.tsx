@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createServerClient } from "@/lib/supabase/server";
@@ -62,11 +64,11 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  // 조회수 증가
-  await supabase
-    .from("posts")
-    .update({ view_count: post.view_count + 1 })
-    .eq("id", post.id);
+  // 조회수 증가 (RLS 우회 RPC 사용)
+  const { data: newCount } = await supabase.rpc("increment_view_count", {
+    post_id: post.id,
+  });
+  const viewCount = newCount ?? post.view_count;
 
   // 태그 가져오기
   const { data: postTags } = await supabase
@@ -161,7 +163,7 @@ export default async function PostPage({ params }: PostPageProps) {
             />
             <span className="flex items-center gap-1.5">
               <HiOutlineEye className="h-4 w-4" />
-              {(post.view_count + 1).toLocaleString()} 조회
+              {viewCount.toLocaleString()} 조회
             </span>
           </div>
           {tags.length > 0 && (
