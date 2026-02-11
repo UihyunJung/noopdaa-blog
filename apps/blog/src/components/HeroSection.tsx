@@ -108,6 +108,8 @@ export function HeroSection({
       <Swiper
         modules={[Autoplay, Pagination, EffectFade]}
         effect="fade"
+        fadeEffect={{ crossFade: true }}
+        speed={1500}
         autoplay={{
           delay: 7000,
           disableOnInteraction: false,

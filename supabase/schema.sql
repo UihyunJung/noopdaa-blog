@@ -214,7 +214,27 @@ CREATE POLICY "Authenticated users can manage media"
   USING (auth.role() = 'authenticated');
 
 -- ============================================
--- 8. Storage Bucket 설정
+-- 8. Page Views → Posts 조회수 동기화
+-- ============================================
+-- page_views INSERT 시 posts.view_count를 자동으로 +1
+CREATE OR REPLACE FUNCTION sync_post_view_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.post_id IS NOT NULL THEN
+    UPDATE posts
+    SET view_count = view_count + 1
+    WHERE id = NEW.post_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_page_view_inserted
+  AFTER INSERT ON page_views
+  FOR EACH ROW EXECUTE FUNCTION sync_post_view_count();
+
+-- ============================================
+-- 9. Storage Bucket 설정
 -- ============================================
 -- Supabase Dashboard > Storage에서 'media' 버킷을 생성하고
 -- Public access를 활성화하세요.

@@ -68,7 +68,7 @@ packages/
 - `cn()` 유틸: `import { cn } from "@noopdaa/ui"` (clsx + tailwind-merge)
 
 **admin 공유 유틸 (`@/lib/utils`):**
-- `getDateString(offset)` - 날짜 문자열 생성 (예: `getDateString(-30)`)
+- `getDateString(offset)` - KST 기준 날짜 문자열 생성 (예: `getDateString(-30)`)
 - `formatFileSize(bytes)` - 파일 크기 포맷 (예: `1.5 MB`)
 - `generateSlug(name)` - URL slug 생성 (한글 지원)
 - `formatDateKR(dateStr)` - 한국어 날짜 포맷
@@ -94,7 +94,8 @@ packages/
 - 성공 시 `toast.success("메시지")` 호출 (CUD 작업)
 
 **로딩 상태 처리:**
-- 페이지 이동: Next.js `loading.tsx` 파일 사용 (스켈레톤 UI 적용)
+- 페이지 이동: Next.js `loading.tsx` 파일 사용 (각 라우트별 스켈레톤 UI)
+- 필터/검색 등 같은 라우트 내 네비게이션: `useTransition` + `isPending`으로 로딩 표시
 - 컴포넌트 로딩: `LoadingSpinner` 컴포넌트 (`@/components/LoadingSpinner`)
 - 버튼 로딩: `Button`의 `isLoading` prop 사용
 - 삭제/수정 작업: 개별 항목 ID로 로딩 상태 추적 (`deletingId`, `actionLoading`)
@@ -116,7 +117,7 @@ packages/
 **캐싱 전략:**
 - 블로그 홈: `revalidate = 3600` (1시간)
 - 포스트 목록: `force-dynamic` (검색/필터 지원)
-- 포스트 상세: `force-dynamic` (조회수 증가)
+- 포스트 상세: `force-dynamic` (실시간 조회수 반영)
 - admin 통계: `revalidate = 60` (1분)
 
 **다크모드:**
@@ -128,13 +129,18 @@ packages/
 테이블: `posts`, `categories`, `tags`, `post_tags`, `comments`, `media`, `profiles`, `page_views`, `site_settings`
 
 - `posts`: status ENUM (`draft`/`published`), `slug` UNIQUE, `updated_at` 자동 갱신 트리거
+- `posts.view_count`: `page_views` INSERT 시 DB 트리거(`sync_post_view_count`)로 자동 +1 (RPC 직접 호출 금지)
 - `comments`: `is_approved` 기본값 false (승인 필요), `parent_id`로 대댓글 지원
 - `post_tags`: 다대다 관계 조인 테이블
 - RLS 정책: 공개 데이터 SELECT 허용, CUD는 인증 필요
 
 스토리지: `media` 버킷 (경로: `uploads/{timestamp}-{random}.{ext}`)
 
-스키마 파일: `supabase/schema.sql`
+**날짜/시간 기준:**
+- 통계, 방문자 집계 등 날짜 기준은 한국 시간(KST, UTC+9)
+- `toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" })` 사용 (`toISOString()` 사용 금지)
+
+스키마 파일: `supabase/schema.sql`, 마이그레이션: `supabase/migrations/`
 
 ## 환경 변수
 

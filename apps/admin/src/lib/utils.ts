@@ -6,7 +6,8 @@
 export function getDateString(daysOffset: number = 0): string {
   const date = new Date();
   date.setDate(date.getDate() + daysOffset);
-  return date.toISOString().split("T")[0]!;
+  // 한국 시간(KST, UTC+9) 기준 날짜 (en-CA 로케일 → YYYY-MM-DD 형식)
+  return date.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
 }
 
 /**

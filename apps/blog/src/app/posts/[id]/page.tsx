@@ -67,14 +67,13 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  // 조회수 증가, 태그, 이전/다음 포스트를 병렬로 가져오기
+  // 태그, 이전/다음 포스트를 병렬로 가져오기
+  // 조회수는 PageViewTracker(클라이언트) → page_views INSERT → DB 트리거로 자동 동기화
   const [
-    { data: newCount },
     { data: postTags },
     { data: prevPost },
     { data: nextPost },
   ] = await Promise.all([
-    supabase.rpc("increment_view_count", { post_id: post.id }),
     supabase.from("post_tags").select("tags(id, name, slug)").eq("post_id", post.id),
     supabase.from("posts").select("id, title").eq("status", "published")
       .lt("published_at", post.published_at || post.created_at)
@@ -83,8 +82,6 @@ export default async function PostPage({ params }: PostPageProps) {
       .gt("published_at", post.published_at || post.created_at)
       .order("published_at", { ascending: true }).limit(1).single(),
   ]);
-
-  const viewCount = newCount ?? post.view_count;
   const tags = (postTags?.map((pt) => pt.tags).filter(Boolean) || []) as Pick<Tag, "id" | "name" | "slug">[];
 
   // 목차 존재 여부 확인 (## 또는 ### 헤딩이 있는지)
@@ -156,7 +153,7 @@ export default async function PostPage({ params }: PostPageProps) {
             />
             <span className="flex items-center gap-1.5">
               <HiOutlineEye className="h-4 w-4" />
-              {viewCount.toLocaleString()} 조회
+              {post.view_count.toLocaleString()} 조회
             </span>
           </div>
           {tags.length > 0 && (

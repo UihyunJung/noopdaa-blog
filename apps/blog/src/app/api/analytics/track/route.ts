@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
     const ip = forwardedFor?.split(",")[0]?.trim() || realIP || "unknown";
     const ipHash = hashIP(ip);
 
-    // visitor_id: IP 해시 + 날짜 (일별 고유 방문자 계산용)
-    const today = new Date().toISOString().split("T")[0];
+    // visitor_id: IP 해시 + 한국 날짜 (일별 고유 방문자 계산용)
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
     const visitorId = `${ipHash}_${today}`;
 
     const supabase = await createServerClient();
