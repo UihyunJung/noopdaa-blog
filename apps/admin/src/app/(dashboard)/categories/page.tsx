@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { generateSlug } from "@/lib/utils";
 import type { Category } from "@/lib/types";
 
 export default function CategoriesPage() {
@@ -43,14 +45,26 @@ export default function CategoriesPage() {
 
     const categoryData = {
       name,
-      slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
+      slug: slug || generateSlug(name),
       description: description || null,
     };
 
     if (editingId) {
-      await supabase.from("categories").update(categoryData).eq("id", editingId);
+      const { error } = await supabase.from("categories").update(categoryData).eq("id", editingId);
+      if (error) {
+        toast.error("카테고리 수정에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+      toast.success("카테고리가 수정되었습니다.");
     } else {
-      await supabase.from("categories").insert(categoryData);
+      const { error } = await supabase.from("categories").insert(categoryData);
+      if (error) {
+        toast.error("카테고리 추가에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+      toast.success("카테고리가 추가되었습니다.");
     }
 
     setName("");
@@ -72,7 +86,12 @@ export default function CategoriesPage() {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     setDeletingId(id);
     try {
-      await supabase.from("categories").delete().eq("id", id);
+      const { error } = await supabase.from("categories").delete().eq("id", id);
+      if (error) {
+        toast.error("카테고리 삭제에 실패했습니다.");
+        return;
+      }
+      toast.success("카테고리가 삭제되었습니다.");
       await loadCategories();
     } finally {
       setDeletingId(null);

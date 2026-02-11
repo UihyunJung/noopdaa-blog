@@ -3,6 +3,7 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, EffectFade } from "swiper/modules";
 import Link from "next/link";
+import Image from "next/image";
 import { HiOutlineArrowRight } from "react-icons/hi2";
 
 import "swiper/css";
@@ -42,10 +43,15 @@ export function HeroSection({
       <section className={`relative overflow-hidden ${HERO_HEIGHT}`}>
         {/* 배경 이미지 */}
         {heroImageUrl && (
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImageUrl})` }}
-          >
+          <div className="absolute inset-0">
+            <Image
+              src={heroImageUrl}
+              alt={siteName}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/90 via-zinc-900/70 to-zinc-900/50" />
           </div>
         )}
@@ -117,10 +123,15 @@ export function HeroSection({
           <div className="relative h-full overflow-hidden">
             {/* 배경 이미지 */}
             {heroImageUrl && (
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${heroImageUrl})` }}
-              >
+              <div className="absolute inset-0">
+                <Image
+                  src={heroImageUrl}
+                  alt={siteName}
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/90 via-zinc-900/70 to-zinc-900/50" />
               </div>
             )}
@@ -161,17 +172,18 @@ export function HeroSection({
           <SwiperSlide key={post.id}>
             <div className="relative h-full overflow-hidden">
               {/* 배경 이미지 (포스트 썸네일 또는 사이트 대표이미지) */}
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{
-                  backgroundImage: `url(${post.thumbnail_url || heroImageUrl || ""})`,
-                }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/90 via-zinc-900/70 to-zinc-900/50" />
-              </div>
-
-              {/* 배경 그라데이션 (이미지 없을 때) */}
-              {!post.thumbnail_url && !heroImageUrl && (
+              {(post.thumbnail_url || heroImageUrl) ? (
+                <div className="absolute inset-0">
+                  <Image
+                    src={post.thumbnail_url || heroImageUrl!}
+                    alt={post.title}
+                    fill
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/90 via-zinc-900/70 to-zinc-900/50" />
+                </div>
+              ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900" />
               )}
 

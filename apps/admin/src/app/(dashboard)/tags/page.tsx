@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { generateSlug } from "@/lib/utils";
 import type { Tag } from "@/lib/types";
 import { HiOutlinePencilSquare, HiOutlineXMark } from "react-icons/hi2";
 import { ImSpinner8 } from "react-icons/im";
@@ -40,13 +42,25 @@ export default function TagsPage() {
 
     const tagData = {
       name,
-      slug: name.toLowerCase().replace(/\s+/g, "-"),
+      slug: generateSlug(name),
     };
 
     if (editingId) {
-      await supabase.from("tags").update(tagData).eq("id", editingId);
+      const { error } = await supabase.from("tags").update(tagData).eq("id", editingId);
+      if (error) {
+        toast.error("태그 수정에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+      toast.success("태그가 수정되었습니다.");
     } else {
-      await supabase.from("tags").insert(tagData);
+      const { error } = await supabase.from("tags").insert(tagData);
+      if (error) {
+        toast.error("태그 추가에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+      toast.success("태그가 추가되었습니다.");
     }
 
     setName("");
@@ -64,7 +78,12 @@ export default function TagsPage() {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     setDeletingId(id);
     try {
-      await supabase.from("tags").delete().eq("id", id);
+      const { error } = await supabase.from("tags").delete().eq("id", id);
+      if (error) {
+        toast.error("태그 삭제에 실패했습니다.");
+        return;
+      }
+      toast.success("태그가 삭제되었습니다.");
       await loadTags();
     } finally {
       setDeletingId(null);

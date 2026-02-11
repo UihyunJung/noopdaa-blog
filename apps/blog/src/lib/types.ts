@@ -47,3 +47,16 @@ export type PostWithRelations = Post & {
   category?: Category | null;
   tags?: Tag[];
 };
+
+// 공통 합성 타입
+export type PostWithCategory = Post & {
+  categories: Pick<Category, "name" | "slug"> | null;
+};
+
+export interface SiteSettings {
+  site_name: string;
+  site_description: string | null;
+  og_image_url: string | null;
+  hero_image_url?: string | null;
+  hero_post_ids?: string[] | null;
+}

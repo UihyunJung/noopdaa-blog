@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
+import { formatFileSize } from "@/lib/utils";
 import type { Media } from "@/lib/types";
 import { HiOutlineXMark } from "react-icons/hi2";
 import { ImSpinner8 } from "react-icons/im";
@@ -44,12 +45,6 @@ export function MediaLibraryModal({
   const filteredMedia = media.filter((item) =>
     item.filename.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
 
   const handleSelect = (item: Media) => {
     onSelect(item.url, item.filename);

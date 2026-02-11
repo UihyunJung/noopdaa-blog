@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 import { Button, Input } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import type { Comment } from "@/lib/types";
@@ -241,7 +242,7 @@ export function Comments({ postId, postTitle }: CommentsProps) {
         .single();
 
       if (error) {
-        alert("댓글 작성에 실패했습니다.");
+        toast.error("댓글 작성에 실패했습니다.");
         return;
       }
 

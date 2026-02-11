@@ -64,7 +64,14 @@ packages/
 **패키지 간 import:**
 - UI: `import { Button, Card } from "@noopdaa/ui"`
 - 타입: `import type { Post, Category } from "@/lib/types"` (각 앱에서 로컬 re-export)
+- 공통 합성 타입: `PostWithCategory`, `SiteSettings`는 `@/lib/types`에 정의 (중복 선언 금지)
 - `cn()` 유틸: `import { cn } from "@noopdaa/ui"` (clsx + tailwind-merge)
+
+**admin 공유 유틸 (`@/lib/utils`):**
+- `getDateString(offset)` - 날짜 문자열 생성 (예: `getDateString(-30)`)
+- `formatFileSize(bytes)` - 파일 크기 포맷 (예: `1.5 MB`)
+- `generateSlug(name)` - URL slug 생성 (한글 지원)
+- `formatDateKR(dateStr)` - 한국어 날짜 포맷
 
 **admin 인증 흐름:**
 - `middleware.ts`가 모든 요청에서 세션 체크
@@ -75,8 +82,19 @@ packages/
 - 에디터 (admin): `@uiw/react-md-editor`, 이미지 업로드 시 최대 1920px 자동 리사이징
 - 렌더링 (blog): `react-markdown` + `remark-gfm` + `rehype-highlight`
 
+**Toast 알림:**
+- `sonner` 라이브러리 사용 (blog, admin 양쪽 설치됨)
+- `<Toaster>` 컴포넌트는 각 앱 `layout.tsx`에 포함
+- 사용법: `import { toast } from "sonner"` → `toast.success()`, `toast.error()`
+- `alert()` 사용 금지, 반드시 `toast`로 대체
+
+**에러 처리 패턴:**
+- Supabase 쿼리 후 반드시 `{ data, error }` 구조분해하여 `error` 확인
+- 에러 시 `toast.error("메시지")` 호출
+- 성공 시 `toast.success("메시지")` 호출 (CUD 작업)
+
 **로딩 상태 처리:**
-- 페이지 이동: Next.js `loading.tsx` 파일 사용
+- 페이지 이동: Next.js `loading.tsx` 파일 사용 (스켈레톤 UI 적용)
 - 컴포넌트 로딩: `LoadingSpinner` 컴포넌트 (`@/components/LoadingSpinner`)
 - 버튼 로딩: `Button`의 `isLoading` prop 사용
 - 삭제/수정 작업: 개별 항목 ID로 로딩 상태 추적 (`deletingId`, `actionLoading`)
@@ -85,6 +103,21 @@ packages/
 - 폼 컴포넌트는 부모 컴포넌트 외부에 정의 (내부 정의 시 상태 변경마다 remount되어 입력 포커스 유실)
 - 비동기 작업 시 중복 클릭 방지: `if (isSubmitting) return;` + `try-finally`로 상태 관리
 - admin에서 폼 관리: `react-hook-form` 사용
+
+**이미지 최적화:**
+- 배경 이미지는 CSS `background-image` 대신 Next.js `Image` 컴포넌트 + `fill` + `object-cover` 사용
+- 마크다운 본문 이미지: `PostContent`의 react-markdown `img` 컴포넌트 (외부 URL 대응)
+- HeroSection, 포스트 상세 커버 이미지에 `priority` 속성 적용
+
+**Dynamic Import:**
+- 큰 클라이언트 라이브러리(Swiper, react-markdown 등)는 `next/dynamic`으로 동적 로드
+- `export const dynamic = "force-dynamic"`와 이름 충돌 시 `import nextDynamic from "next/dynamic"` 사용
+
+**캐싱 전략:**
+- 블로그 홈: `revalidate = 3600` (1시간)
+- 포스트 목록: `force-dynamic` (검색/필터 지원)
+- 포스트 상세: `force-dynamic` (조회수 증가)
+- admin 통계: `revalidate = 60` (1분)
 
 **다크모드:**
 - `next-themes` 사용, class 기반 (`darkMode: "class"`)

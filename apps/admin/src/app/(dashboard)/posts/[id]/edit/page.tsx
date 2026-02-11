@@ -23,7 +23,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
   }
 
   // 태그 ID 대신 태그 이름 목록 전달
-  const selectedTagNames = postTags?.map((pt: any) => pt.tags?.name).filter(Boolean) || [];
+  const selectedTagNames = (postTags?.map((pt) => (pt.tags as { name: string } | null)?.name).filter(Boolean) || []) as string[];
 
   return (
     <div className="space-y-6">

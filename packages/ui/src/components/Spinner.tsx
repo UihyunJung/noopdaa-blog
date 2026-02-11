@@ -17,6 +17,8 @@ export function Spinner({ size = "md", className }: SpinnerProps) {
   return (
     <svg
       className={cn("animate-spin text-primary-600", sizes[size], className)}
+      role="status"
+      aria-label="로딩 중"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

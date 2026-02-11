@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Button, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -34,7 +35,11 @@ export default function CommentsPage() {
         query = query.eq("is_approved", true);
       }
 
-      const { data } = await query;
+      const { data, error } = await query;
+      if (error) {
+        toast.error("댓글을 불러오지 못했습니다.");
+        return;
+      }
       setComments((data as CommentWithPost[]) || []);
     } finally {
       setIsLoading(false);
@@ -44,7 +49,12 @@ export default function CommentsPage() {
   const handleApprove = async (id: string) => {
     setActionLoading(id);
     try {
-      await supabase.from("comments").update({ is_approved: true }).eq("id", id);
+      const { error } = await supabase.from("comments").update({ is_approved: true }).eq("id", id);
+      if (error) {
+        toast.error("댓글 승인에 실패했습니다.");
+        return;
+      }
+      toast.success("댓글이 승인되었습니다.");
       await loadComments();
     } finally {
       setActionLoading(null);
@@ -55,7 +65,12 @@ export default function CommentsPage() {
     if (!confirm("정말 삭제하시겠습니까?")) return;
     setActionLoading(id);
     try {
-      await supabase.from("comments").delete().eq("id", id);
+      const { error } = await supabase.from("comments").delete().eq("id", id);
+      if (error) {
+        toast.error("댓글 삭제에 실패했습니다.");
+        return;
+      }
+      toast.success("댓글이 삭제되었습니다.");
       await loadComments();
     } finally {
       setActionLoading(null);

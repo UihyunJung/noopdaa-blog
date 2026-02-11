@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 import { createServerClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
+import type { SiteSettings } from "@/lib/types";
 import "./globals.scss";
-
-interface SiteSettings {
-  site_name: string;
-  site_description: string | null;
-  og_image_url: string | null;
-}
 
 async function getSiteSettings(): Promise<SiteSettings | null> {
   const supabase = await createServerClient();
@@ -63,6 +59,7 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <Toaster richColors position="top-center" />
           <PageViewTracker pageType="page" />
           <Header />
           <main className="flex-1">{children}</main>

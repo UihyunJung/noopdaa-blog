@@ -1,4 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server";
+import { getDateString } from "@/lib/utils";
 import { AnalyticsOverview } from "./components/AnalyticsOverview";
 import { ViewsChart } from "./components/ViewsChart";
 import { TopPosts } from "./components/TopPosts";
@@ -7,53 +8,51 @@ import { DeviceChart } from "./components/DeviceChart";
 import { BrowserChart } from "./components/BrowserChart";
 import { HourlyChart } from "./components/HourlyChart";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function AnalyticsPage() {
   const supabase = await createServerClient();
 
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const todayStr = getDateString(0);
+  const yesterdayStr = getDateString(-1);
+  const thirtyDaysAgoStr = getDateString(-30);
+  const sevenDaysAgoStr = getDateString(-7);
 
-  const thirtyDaysAgo = new Date(today);
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
-
-  const { count: totalViews } = await supabase
-    .from("page_views")
-    .select("*", { count: "exact", head: true });
-
-  const { count: todayViews } = await supabase
-    .from("page_views")
-    .select("*", { count: "exact", head: true })
-    .gte("viewed_at", `${todayStr}T00:00:00`)
-    .lt("viewed_at", `${todayStr}T23:59:59`);
-
-  const { count: yesterdayViews } = await supabase
-    .from("page_views")
-    .select("*", { count: "exact", head: true })
-    .gte("viewed_at", `${yesterdayStr}T00:00:00`)
-    .lt("viewed_at", `${yesterdayStr}T23:59:59`);
-
-  const { data: todayUniqueData } = await supabase
-    .from("page_views")
-    .select("visitor_id")
-    .gte("viewed_at", `${todayStr}T00:00:00`)
-    .lt("viewed_at", `${todayStr}T23:59:59`);
+  // 모든 쿼리를 병렬로 실행
+  const [
+    { count: totalViews },
+    { count: todayViews },
+    { count: yesterdayViews },
+    { data: todayUniqueData },
+    { data: uniqueData },
+    { data: dailyData },
+    { data: postViewsData },
+    { data: referrerData },
+    { data: deviceData },
+    { data: browserData },
+    { data: hourlyData },
+  ] = await Promise.all([
+    supabase.from("page_views").select("*", { count: "exact", head: true }),
+    supabase.from("page_views").select("*", { count: "exact", head: true })
+      .gte("viewed_at", `${todayStr}T00:00:00`).lt("viewed_at", `${todayStr}T23:59:59`),
+    supabase.from("page_views").select("*", { count: "exact", head: true })
+      .gte("viewed_at", `${yesterdayStr}T00:00:00`).lt("viewed_at", `${yesterdayStr}T23:59:59`),
+    supabase.from("page_views").select("visitor_id")
+      .gte("viewed_at", `${todayStr}T00:00:00`).lt("viewed_at", `${todayStr}T23:59:59`),
+    supabase.from("page_views").select("ip_hash"),
+    supabase.from("page_views").select("viewed_at, visitor_id").gte("viewed_at", thirtyDaysAgoStr),
+    supabase.from("page_views").select("post_id, posts(id, title)")
+      .not("post_id", "is", null).gte("viewed_at", thirtyDaysAgoStr),
+    supabase.from("page_views").select("referrer").gte("viewed_at", thirtyDaysAgoStr),
+    supabase.from("page_views").select("device_type").gte("viewed_at", thirtyDaysAgoStr),
+    supabase.from("page_views").select("browser").gte("viewed_at", thirtyDaysAgoStr),
+    supabase.from("page_views").select("viewed_at").gte("viewed_at", sevenDaysAgoStr),
+  ]);
 
   const todayUniqueVisitors = new Set(todayUniqueData?.map((v) => v.visitor_id)).size;
-
-  const { data: uniqueData } = await supabase.from("page_views").select("ip_hash");
   const totalUniqueVisitors = new Set(uniqueData?.map((v) => v.ip_hash)).size;
 
-  const { data: dailyData } = await supabase
-    .from("page_views")
-    .select("viewed_at, visitor_id")
-    .gte("viewed_at", thirtyDaysAgoStr);
-
+  // 일별 통계 집계
   const dailyStats = new Map<string, { views: number; visitors: Set<string> }>();
   dailyData?.forEach((row) => {
     const date = row.viewed_at.split("T")[0] ?? "";
@@ -74,12 +73,7 @@ export default async function AnalyticsPage() {
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const { data: postViewsData } = await supabase
-    .from("page_views")
-    .select("post_id, posts(id, title)")
-    .not("post_id", "is", null)
-    .gte("viewed_at", thirtyDaysAgoStr);
-
+  // 인기 포스트 집계
   const postStats = new Map<string, { title: string; views: number }>();
   postViewsData?.forEach((row) => {
     if (row.post_id && row.posts) {
@@ -96,11 +90,7 @@ export default async function AnalyticsPage() {
     .sort((a, b) => b.views - a.views)
     .slice(0, 10);
 
-  const { data: referrerData } = await supabase
-    .from("page_views")
-    .select("referrer")
-    .gte("viewed_at", thirtyDaysAgoStr);
-
+  // 유입 경로 집계
   const referrerStats = new Map<string, number>();
   referrerData?.forEach((row) => {
     const referrer = parseReferrerDomain(row.referrer);
@@ -112,11 +102,7 @@ export default async function AnalyticsPage() {
     .sort((a, b) => b.views - a.views)
     .slice(0, 10);
 
-  const { data: deviceData } = await supabase
-    .from("page_views")
-    .select("device_type")
-    .gte("viewed_at", thirtyDaysAgoStr);
-
+  // 디바이스 집계
   const deviceStats = new Map<string, number>();
   deviceData?.forEach((row) => {
     const device = row.device_type || "unknown";
@@ -128,11 +114,7 @@ export default async function AnalyticsPage() {
     value,
   }));
 
-  const { data: browserData } = await supabase
-    .from("page_views")
-    .select("browser")
-    .gte("viewed_at", thirtyDaysAgoStr);
-
+  // 브라우저 집계
   const browserStats = new Map<string, number>();
   browserData?.forEach((row) => {
     const browser = row.browser || "Other";
@@ -143,15 +125,7 @@ export default async function AnalyticsPage() {
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
-
-  const { data: hourlyData } = await supabase
-    .from("page_views")
-    .select("viewed_at")
-    .gte("viewed_at", sevenDaysAgoStr);
-
+  // 시간대별 집계
   const hourlyStats = new Array(24).fill(0);
   hourlyData?.forEach((row) => {
     const hour = new Date(row.viewed_at).getHours();

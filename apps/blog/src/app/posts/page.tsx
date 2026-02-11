@@ -5,7 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { PostCard } from "@/components/PostCard";
 import { SearchBar } from "@/components/SearchBar";
 import { CategoryFilter } from "@/components/CategoryFilter";
-import type { Post, Category } from "@/lib/types";
+import type { PostWithCategory, Category } from "@/lib/types";
 import { HiOutlineXMark, HiOutlineMagnifyingGlass, HiOutlineChevronRight } from "react-icons/hi2";
 
 export const metadata: Metadata = {
@@ -14,8 +14,6 @@ export const metadata: Metadata = {
     canonical: "/posts",
   },
 };
-
-type PostWithCategory = Post & { categories: Pick<Category, "name" | "slug"> | null };
 
 interface PostsPageProps {
   searchParams: Promise<{ category?: string; tag?: string; q?: string; page?: string }>;

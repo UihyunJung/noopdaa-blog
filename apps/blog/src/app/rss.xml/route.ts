@@ -1,5 +1,14 @@
 import { createServerClient } from "@/lib/supabase/server";
 
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 export async function GET() {
   const supabase = await createServerClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000";
@@ -23,10 +32,10 @@ export async function GET() {
       ?.map(
         (post) => `
     <item>
-      <title><![CDATA[${post.title}]]></title>
-      <link>${siteUrl}/posts/${post.id}</link>
-      <guid isPermaLink="true">${siteUrl}/posts/${post.id}</guid>
-      <description><![CDATA[${post.excerpt || post.content.slice(0, 200)}]]></description>
+      <title><![CDATA[${escapeXml(post.title)}]]></title>
+      <link>${escapeXml(siteUrl)}/posts/${encodeURIComponent(post.id)}</link>
+      <guid isPermaLink="true">${escapeXml(siteUrl)}/posts/${encodeURIComponent(post.id)}</guid>
+      <description><![CDATA[${escapeXml(post.excerpt || post.content.slice(0, 200))}]]></description>
       <pubDate>${new Date(post.published_at || post.created_at).toUTCString()}</pubDate>
     </item>`
       )
@@ -35,9 +44,9 @@ export async function GET() {
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${siteName}</title>
-    <link>${siteUrl}</link>
-    <description>${siteDescription}</description>
+    <title>${escapeXml(siteName)}</title>
+    <link>${escapeXml(siteUrl)}</link>
+    <description>${escapeXml(siteDescription)}</description>
     <language>ko</language>
     <atom:link href="${siteUrl}/rss.xml" rel="self" type="application/rss+xml"/>
     ${rssItems}

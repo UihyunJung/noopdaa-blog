@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { FaXTwitter, FaFacebookF, FaThreads, FaInstagram } from "react-icons/fa6";
 import { HiOutlineLink, HiOutlineShare } from "react-icons/hi2";
 
@@ -37,7 +38,7 @@ export function ShareButtons({ title, postId }: ShareButtonsProps) {
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(url);
-    alert("링크가 복사되었습니다.");
+    toast.success("링크가 복사되었습니다.");
   };
 
   return (

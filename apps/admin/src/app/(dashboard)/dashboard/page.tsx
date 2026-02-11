@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@noopdaa/ui";
 import { createServerClient } from "@/lib/supabase/server";
+import { getDateString } from "@/lib/utils";
 import { StatsCards } from "./StatsCards";
 import { RecentComments } from "./RecentComments";
 import { PopularPosts } from "./PopularPosts";
@@ -7,11 +8,8 @@ import { PopularPosts } from "./PopularPosts";
 export default async function DashboardPage() {
   const supabase = await createServerClient();
 
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const todayStr = getDateString(0);
+  const yesterdayStr = getDateString(-1);
 
   const [
     { count: postCount },

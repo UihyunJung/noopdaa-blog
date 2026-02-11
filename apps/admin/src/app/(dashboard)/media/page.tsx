@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 import { Button, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { formatFileSize } from "@/lib/utils";
 import type { Media, MediaInsert } from "@/lib/types";
 import { ImSpinner8 } from "react-icons/im";
 
@@ -50,7 +52,7 @@ export default function MediaPage() {
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error("Upload error:", uploadError);
+        toast.error(`${file.name} 업로드에 실패했습니다.`);
         continue;
       }
 
@@ -93,14 +95,9 @@ export default function MediaPage() {
 
   const copyToClipboard = (url: string) => {
     navigator.clipboard.writeText(url);
-    alert("URL이 복사되었습니다.");
+    toast.success("URL이 복사되었습니다.");
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
 
   return (
     <div className="space-y-4 sm:space-y-6">

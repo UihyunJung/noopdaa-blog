@@ -1,18 +1,21 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
+import nextDynamic from "next/dynamic";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { createServerClient } from "@/lib/supabase/server";
-import { PostContent } from "./PostContent";
 import { PostNavigation } from "./PostNavigation";
 import { Comments } from "./Comments";
 import { ShareButtons } from "./ShareButtons";
 import { TableOfContents } from "./TableOfContents";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
-import type { Post, Category } from "@/lib/types";
-import { HiOutlineCalendarDays, HiOutlineEye } from "react-icons/hi2";
 
-type PostWithCategory = Post & { categories: Pick<Category, "name" | "slug"> | null };
+const PostContent = nextDynamic(() => import("./PostContent").then((mod) => mod.PostContent), {
+  loading: () => <div className="animate-pulse space-y-4"><div className="h-4 rounded bg-zinc-200 dark:bg-zinc-700" /><div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700" /><div className="h-4 w-1/2 rounded bg-zinc-200 dark:bg-zinc-700" /></div>,
+});
+import type { Post, PostWithCategory, Tag } from "@/lib/types";
+import { HiOutlineCalendarDays, HiOutlineEye } from "react-icons/hi2";
 
 interface PostPageProps {
   params: Promise<{ id: string }>;
@@ -64,42 +67,28 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  // 조회수 증가 (RLS 우회 RPC 사용)
-  const { data: newCount } = await supabase.rpc("increment_view_count", {
-    post_id: post.id,
-  });
+  // 조회수 증가, 태그, 이전/다음 포스트를 병렬로 가져오기
+  const [
+    { data: newCount },
+    { data: postTags },
+    { data: prevPost },
+    { data: nextPost },
+  ] = await Promise.all([
+    supabase.rpc("increment_view_count", { post_id: post.id }),
+    supabase.from("post_tags").select("tags(id, name, slug)").eq("post_id", post.id),
+    supabase.from("posts").select("id, title").eq("status", "published")
+      .lt("published_at", post.published_at || post.created_at)
+      .order("published_at", { ascending: false }).limit(1).single(),
+    supabase.from("posts").select("id, title").eq("status", "published")
+      .gt("published_at", post.published_at || post.created_at)
+      .order("published_at", { ascending: true }).limit(1).single(),
+  ]);
+
   const viewCount = newCount ?? post.view_count;
-
-  // 태그 가져오기
-  const { data: postTags } = await supabase
-    .from("post_tags")
-    .select("tags(id, name, slug)")
-    .eq("post_id", post.id);
-
-  const tags = postTags?.map((pt) => pt.tags).filter(Boolean) || [];
+  const tags = (postTags?.map((pt) => pt.tags).filter(Boolean) || []) as Pick<Tag, "id" | "name" | "slug">[];
 
   // 목차 존재 여부 확인 (## 또는 ### 헤딩이 있는지)
   const hasTableOfContents = /^#{2,3}\s+.+$/m.test(post.content);
-
-  // 이전/다음 포스트
-  const [{ data: prevPost }, { data: nextPost }] = await Promise.all([
-    supabase
-      .from("posts")
-      .select("id, title")
-      .eq("status", "published")
-      .lt("published_at", post.published_at || post.created_at)
-      .order("published_at", { ascending: false })
-      .limit(1)
-      .single(),
-    supabase
-      .from("posts")
-      .select("id, title")
-      .eq("status", "published")
-      .gt("published_at", post.published_at || post.created_at)
-      .order("published_at", { ascending: true })
-      .limit(1)
-      .single(),
-  ]);
 
   return (
     <article className="min-h-screen">
@@ -110,9 +99,13 @@ export default async function PostPage({ params }: PostPageProps) {
         {/* 배경 이미지 (커버 이미지가 있는 경우) */}
         {post.thumbnail_url ? (
           <>
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${post.thumbnail_url})` }}
+            <Image
+              src={post.thumbnail_url}
+              alt={post.title}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-zinc-900/50 backdrop-blur-sm" />
           </>
@@ -168,7 +161,7 @@ export default async function PostPage({ params }: PostPageProps) {
           </div>
           {tags.length > 0 && (
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {tags.map((tag: any) => (
+              {tags.map((tag) => (
                 <a
                   key={tag.id}
                   href={`/posts?tag=${encodeURIComponent(tag.name)}`}

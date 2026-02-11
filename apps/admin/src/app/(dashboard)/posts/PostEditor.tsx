@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button, Input, Card } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { TagInput } from "@/components/editor/TagInput";
 import { ThumbnailPicker, type ThumbnailData } from "@/components/editor/ThumbnailPicker";
+import { generateSlug } from "@/lib/utils";
 import type { Post, Category, Tag } from "@/lib/types";
 
 interface PostEditorProps {
@@ -89,7 +91,7 @@ export function PostEditor({
 
   const handleSubmit = async (submitStatus: "draft" | "published") => {
     if (!title.trim() || !content.trim()) {
-      alert("제목과 내용을 입력해주세요.");
+      toast.error("제목과 내용을 입력해주세요.");
       return;
     }
 
@@ -98,7 +100,7 @@ export function PostEditor({
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      alert("로그인이 필요합니다.");
+      toast.error("로그인이 필요합니다.");
       setIsLoading(false);
       return;
     }
@@ -109,7 +111,7 @@ export function PostEditor({
       try {
         thumbnailUrl = await uploadThumbnail(supabase, thumbnailData);
       } catch (err) {
-        alert(err instanceof Error ? err.message : "썸네일 업로드 실패");
+        toast.error(err instanceof Error ? err.message : "썸네일 업로드 실패");
         setIsLoading(false);
         return;
       }
@@ -133,13 +135,20 @@ export function PostEditor({
     let postId = post?.id;
 
     if (post) {
+      // 작성자 검증: 본인이 작성한 포스트만 수정 가능
+      if (post.author_id && post.author_id !== user.id) {
+        toast.error("본인이 작성한 포스트만 수정할 수 있습니다.");
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("posts")
         .update(postData)
         .eq("id", post.id);
 
       if (error) {
-        alert("저장에 실패했습니다.");
+        toast.error("저장에 실패했습니다.");
         setIsLoading(false);
         return;
       }
@@ -151,7 +160,7 @@ export function PostEditor({
         .single();
 
       if (error || !data) {
-        alert("저장에 실패했습니다.");
+        toast.error("저장에 실패했습니다.");
         setIsLoading(false);
         return;
       }
@@ -174,14 +183,9 @@ export function PostEditor({
           tagIds.push(existingTag.id);
         } else {
           // 새 태그 생성
-          const slug = tagName
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9가-힣-]/g, "");
-
           const { data: newTag } = await supabase
             .from("tags")
-            .insert({ name: tagName, slug: slug || `tag-${Date.now()}` })
+            .insert({ name: tagName, slug: generateSlug(tagName) })
             .select("id")
             .single();
 

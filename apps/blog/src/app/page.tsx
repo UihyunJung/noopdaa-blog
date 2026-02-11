@@ -1,25 +1,22 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 import { createServerClient } from "@/lib/supabase/server";
 import { PostCard } from "@/components/PostCard";
-import { HeroSection } from "@/components/HeroSection";
-import type { Post, Category } from "@/lib/types";
+import type { PostWithCategory, SiteSettings } from "@/lib/types";
 import { HiOutlineChevronRight, HiOutlineDocumentText } from "react-icons/hi2";
+
+const HeroSection = dynamic(() => import("@/components/HeroSection").then((mod) => mod.HeroSection), {
+  loading: () => <div className="h-[420px] animate-pulse bg-zinc-100 dark:bg-zinc-800 sm:h-[480px] lg:h-[520px]" />,
+});
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
 };
-
-type PostWithCategory = Post & { categories: Pick<Category, "name" | "slug"> | null };
-
-interface SiteSettings {
-  site_name: string;
-  site_description: string | null;
-  hero_image_url: string | null;
-  hero_post_ids: string[] | null;
-}
 
 interface HeroPost {
   id: string;
