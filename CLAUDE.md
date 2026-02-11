@@ -37,6 +37,9 @@ apps/
 ├── blog/             # 공개 블로그 (포트 3000)
 │   └── src/
 │       ├── app/      # 포스트, 댓글, RSS, 사이트맵, API 라우트
+│       │   └── posts/
+│       │       ├── (list)/   # route group: 목록 전용 (loading.tsx 스코프 분리)
+│       │       └── [id]/     # 포스트 상세
 │       ├── components/  # Header, Footer, PostCard, HeroSection, Comments 등
 │       └── lib/      # supabase/, types.ts, database.types.ts, analytics/
 └── admin/            # 관리자 대시보드 (포트 3001)
@@ -95,6 +98,7 @@ packages/
 
 **로딩 상태 처리:**
 - 페이지 이동: Next.js `loading.tsx` 파일 사용 (각 라우트별 스켈레톤 UI)
+- `loading.tsx`는 같은 레벨의 page + 하위 children까지 Suspense로 감싸므로, 형제 라우트와 스켈레톤이 겹칠 경우 route group `()`으로 스코프 분리 필요
 - 필터/검색 등 같은 라우트 내 네비게이션: `useTransition` + `isPending`으로 로딩 표시
 - 컴포넌트 로딩: `LoadingSpinner` 컴포넌트 (`@/components/LoadingSpinner`)
 - 버튼 로딩: `Button`의 `isLoading` prop 사용
