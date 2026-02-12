@@ -42,7 +42,6 @@ export async function generateMetadata(): Promise<Metadata> {
       images: settings?.og_image_url ? [settings.og_image_url] : undefined,
     },
     verification: {
-      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
       other: {
         "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || "",
       },
