@@ -129,7 +129,6 @@ export function PostEditor({
       meta_title: metaTitle || title,
       meta_description: metaDescription || excerpt || content.slice(0, 160),
       published_at: submitStatus === "published" ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
     };
 
     let postId = post?.id;

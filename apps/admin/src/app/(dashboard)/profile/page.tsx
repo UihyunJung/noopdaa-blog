@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Button, Card, Input } from "@noopdaa/ui";
+import { toast } from "sonner";
+import { Button, Card, Input, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { ImSpinner8 } from "react-icons/im";
 
@@ -19,7 +20,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supabase = createClient();
@@ -51,7 +52,6 @@ export default function ProfilePage() {
     if (!profile || !username.trim()) return;
 
     setIsSaving(true);
-    setMessage(null);
 
     const { error } = await supabase
       .from("profiles")
@@ -61,9 +61,9 @@ export default function ProfilePage() {
     setIsSaving(false);
 
     if (error) {
-      setMessage({ type: "error", text: "닉네임 저장에 실패했습니다." });
+      toast.error("닉네임 저장에 실패했습니다.");
     } else {
-      setMessage({ type: "success", text: "닉네임이 저장되었습니다." });
+      toast.success("닉네임이 저장되었습니다.");
       setProfile({ ...profile, username: username.trim() });
     }
   };
@@ -73,7 +73,6 @@ export default function ProfilePage() {
     if (!file || !profile) return;
 
     setIsUploading(true);
-    setMessage(null);
 
     const fileExt = file.name.split(".").pop();
     const fileName = `avatar-${profile.id}-${Date.now()}.${fileExt}`;
@@ -90,7 +89,7 @@ export default function ProfilePage() {
 
     if (uploadError) {
       setIsUploading(false);
-      setMessage({ type: "error", text: "아바타 업로드에 실패했습니다." });
+      toast.error("아바타 업로드에 실패했습니다.");
       return;
     }
 
@@ -106,9 +105,9 @@ export default function ProfilePage() {
     setIsUploading(false);
 
     if (updateError) {
-      setMessage({ type: "error", text: "프로필 업데이트에 실패했습니다." });
+      toast.error("프로필 업데이트에 실패했습니다.");
     } else {
-      setMessage({ type: "success", text: "아바타가 업데이트되었습니다." });
+      toast.success("아바타가 업데이트되었습니다.");
       setProfile({ ...profile, avatar_url: publicUrl });
     }
 
@@ -119,10 +118,8 @@ export default function ProfilePage() {
 
   const handleRemoveAvatar = async () => {
     if (!profile || !profile.avatar_url) return;
-    if (!confirm("아바타를 삭제하시겠습니까?")) return;
 
     setIsUploading(true);
-    setMessage(null);
 
     const oldPath = profile.avatar_url.split("/").slice(-2).join("/");
     await supabase.storage.from("media").remove([oldPath]);
@@ -135,9 +132,9 @@ export default function ProfilePage() {
     setIsUploading(false);
 
     if (error) {
-      setMessage({ type: "error", text: "아바타 삭제에 실패했습니다." });
+      toast.error("아바타 삭제에 실패했습니다.");
     } else {
-      setMessage({ type: "success", text: "아바타가 삭제되었습니다." });
+      toast.success("아바타가 삭제되었습니다.");
       setProfile({ ...profile, avatar_url: null });
     }
   };
@@ -155,18 +152,6 @@ export default function ProfilePage() {
       <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
         프로필 설정
       </h1>
-
-      {message && (
-        <div
-          className={`rounded-lg px-4 py-3 ${
-            message.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* 아바타 섹션 */}
       <Card className="p-4 sm:p-6">
@@ -211,7 +196,7 @@ export default function ProfilePage() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={handleRemoveAvatar}
+                onClick={() => setIsConfirmOpen(true)}
                 disabled={isUploading}
               >
                 사진 삭제
@@ -267,6 +252,20 @@ export default function ProfilePage() {
           </div>
         </dl>
       </Card>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={async () => {
+          await handleRemoveAvatar();
+          setIsConfirmOpen(false);
+        }}
+        title="아바타 삭제"
+        description="아바타를 삭제하시겠습니까?"
+        confirmText="삭제"
+        variant="danger"
+        isLoading={isUploading}
+      />
     </div>
   );
 }

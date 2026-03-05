@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useRef } from "react";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
 import type { ICommand } from "@uiw/react-md-editor";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -31,7 +32,7 @@ export function MarkdownEditor({
     onUploadComplete: () => setUploadingCount((c) => c - 1),
     onUploadError: (error) => {
       setUploadingCount((c) => c - 1);
-      alert(`업로드 실패: ${error.message}`);
+      toast.error(`업로드 실패: ${error.message}`);
     },
   });
 

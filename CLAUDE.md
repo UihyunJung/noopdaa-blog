@@ -53,7 +53,7 @@ apps/
 
 packages/
 ├── ui/               # 공유 컴포넌트 (Button, Input, Card, Spinner) + cn() 유틸
-├── database/         # Supabase 클라이언트 팩토리 & auto-generated 타입
+├── database/         # Supabase auto-generated 타입 (앱에서는 직접 import하지 않고 각 앱의 `@/lib/supabase/` 사용)
 └── config/           # 공유 tsconfig & tailwind 설정
 ```
 
@@ -90,6 +90,7 @@ packages/
 - `<Toaster>` 컴포넌트는 각 앱 `layout.tsx`에 포함
 - 사용법: `import { toast } from "sonner"` → `toast.success()`, `toast.error()`
 - `alert()` 사용 금지, 반드시 `toast`로 대체
+- `confirm()` 사용 금지, 커스텀 확인 모달로 대체
 
 **에러 처리 패턴:**
 - Supabase 쿼리 후 반드시 `{ data, error }` 구조분해하여 `error` 확인
@@ -107,7 +108,7 @@ packages/
 **폼 컴포넌트 주의사항:**
 - 폼 컴포넌트는 부모 컴포넌트 외부에 정의 (내부 정의 시 상태 변경마다 remount되어 입력 포커스 유실)
 - 비동기 작업 시 중복 클릭 방지: `if (isSubmitting) return;` + `try-finally`로 상태 관리
-- admin에서 폼 관리: `react-hook-form` 사용
+- admin 폼 관리: `useState` + 직접 `handleSubmit` 패턴 사용 (`react-hook-form` 미사용)
 
 **이미지 최적화:**
 - 배경 이미지는 CSS `background-image` 대신 Next.js `Image` 컴포넌트 + `fill` + `object-cover` 사용
@@ -132,17 +133,18 @@ packages/
 
 테이블: `posts`, `categories`, `tags`, `post_tags`, `comments`, `media`, `profiles`, `page_views`, `site_settings`
 
-- `posts`: status ENUM (`draft`/`published`), `slug` UNIQUE, `updated_at` 자동 갱신 트리거
+- `posts`: status ENUM (`draft`/`published`), `slug` UNIQUE, `updated_at` DB 트리거로 자동 갱신 (클라이언트에서 수동 설정 불필요)
 - `posts.view_count`: `page_views` INSERT 시 DB 트리거(`sync_post_view_count`)로 자동 +1 (RPC 직접 호출 금지)
-- `comments`: `is_approved` 기본값 false (승인 필요), `parent_id`로 대댓글 지원
+- `comments`: `is_approved` DB 기본값 false이나, blog에서 댓글 작성 시 `is_approved: true`로 삽입 (즉시 노출). `parent_id`로 대댓글 지원
 - `post_tags`: 다대다 관계 조인 테이블
 - RLS 정책: 공개 데이터 SELECT 허용, CUD는 인증 필요
 
 스토리지: `media` 버킷 (경로: `uploads/{timestamp}-{random}.{ext}`)
 
 **날짜/시간 기준:**
-- 통계, 방문자 집계 등 날짜 기준은 한국 시간(KST, UTC+9)
-- `toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" })` 사용 (`toISOString()` 사용 금지)
+- 통계, 방문자 집계, 날짜 표시 등 **날짜 기반 필터/그룹/표시**는 한국 시간(KST, UTC+9) 기준
+- 날짜 문자열 생성: `toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" })` 사용 (`toISOString()` 사용 금지)
+- DB 타임스탬프 필드(`published_at` 등)는 ISO 형식 허용 (서버에서 UTC 저장)
 
 스키마 파일: `supabase/schema.sql`, 마이그레이션: `supabase/migrations/`
 

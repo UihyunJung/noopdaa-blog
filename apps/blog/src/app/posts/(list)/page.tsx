@@ -67,7 +67,9 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   }
 
   if (params.q) {
-    query = query.or(`title.ilike.%${params.q}%,content.ilike.%${params.q}%`);
+    // ilike 특수문자(%_\) 이스케이프
+    const escaped = params.q.replace(/[%_\\]/g, (c) => "\\" + c);
+    query = query.or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`);
   }
 
   const result = await query
@@ -171,7 +173,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                   <a
                     key={p}
-                    href={`/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${params.tag ? `&tag=${encodeURIComponent(params.tag)}` : ""}${params.q ? `&q=${params.q}` : ""}`}
+                    href={`/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${params.tag ? `&tag=${encodeURIComponent(params.tag)}` : ""}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
                     className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-all ${
                       p === page
                         ? "bg-primary-600 text-white shadow-md shadow-primary-600/25"

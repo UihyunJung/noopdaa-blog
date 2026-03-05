@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Button, Input, Card } from "@noopdaa/ui";
+import { Button, Input, Card, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { generateSlug } from "@/lib/utils";
@@ -17,6 +17,7 @@ export default function CategoriesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -83,7 +84,6 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
     setDeletingId(id);
     try {
       const { error } = await supabase.from("categories").delete().eq("id", id);
@@ -194,7 +194,7 @@ export default function CategoriesPage() {
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={() => handleDelete(category.id)}
+                      onClick={() => setConfirmTarget(category.id)}
                       className="flex-1 sm:flex-none"
                       isLoading={deletingId === category.id}
                       disabled={deletingId !== null}
@@ -208,6 +208,21 @@ export default function CategoriesPage() {
           )}
         </Card>
       </div>
+      <ConfirmModal
+        isOpen={confirmTarget !== null}
+        onClose={() => setConfirmTarget(null)}
+        onConfirm={async () => {
+          if (confirmTarget) {
+            await handleDelete(confirmTarget);
+            setConfirmTarget(null);
+          }
+        }}
+        title="카테고리 삭제"
+        description="정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+        confirmText="삭제"
+        variant="danger"
+        isLoading={deletingId !== null}
+      />
     </div>
   );
 }

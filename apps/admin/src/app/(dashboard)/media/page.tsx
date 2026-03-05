@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Button, Card } from "@noopdaa/ui";
+import { Button, Card, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { formatFileSize } from "@/lib/utils";
@@ -15,6 +15,7 @@ export default function MediaPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<Media | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supabase = createClient();
@@ -77,8 +78,6 @@ export default function MediaPage() {
   };
 
   const handleDelete = async (item: Media) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
-
     setDeletingId(item.id);
     try {
       const urlParts = item.url.split("/");
@@ -160,7 +159,7 @@ export default function MediaPage() {
                   <Button
                     variant="danger"
                     size="sm"
-                    onClick={() => handleDelete(item)}
+                    onClick={() => setConfirmTarget(item)}
                     isLoading={deletingId === item.id}
                     disabled={deletingId !== null}
                   >
@@ -180,6 +179,22 @@ export default function MediaPage() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmTarget !== null}
+        onClose={() => setConfirmTarget(null)}
+        onConfirm={async () => {
+          if (confirmTarget) {
+            await handleDelete(confirmTarget);
+            setConfirmTarget(null);
+          }
+        }}
+        title="미디어 삭제"
+        description="정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+        confirmText="삭제"
+        variant="danger"
+        isLoading={deletingId !== null}
+      />
     </div>
   );
 }

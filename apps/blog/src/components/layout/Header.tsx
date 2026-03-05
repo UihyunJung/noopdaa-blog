@@ -3,28 +3,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { createClient } from "@/lib/supabase/client";
 import { HiOutlineMoon, HiOutlineSun, HiOutlineBars3, HiOutlineXMark } from "react-icons/hi2";
 
-export function Header() {
+interface HeaderProps {
+  siteName: string;
+}
+
+export function Header({ siteName }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [siteName, setSiteName] = useState("Blog");
   const [isScrolled, setIsScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
-
-  useEffect(() => {
-    const loadSiteName = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("site_settings")
-        .select("site_name")
-        .single();
-      if (data?.site_name) {
-        setSiteName(data.site_name);
-      }
-    };
-    loadSiteName();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {

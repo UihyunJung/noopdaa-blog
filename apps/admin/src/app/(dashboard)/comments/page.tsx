@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Button, Card } from "@noopdaa/ui";
+import { Button, Card, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import type { Comment, Post } from "@/lib/types";
@@ -14,6 +14,7 @@ export default function CommentsPage() {
   const [filter, setFilter] = useState<"all" | "pending" | "approved">("all");
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -62,7 +63,6 @@ export default function CommentsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
     setActionLoading(id);
     try {
       const { error } = await supabase.from("comments").delete().eq("id", id);
@@ -161,7 +161,7 @@ export default function CommentsPage() {
                   <Button
                     variant="danger"
                     size="sm"
-                    onClick={() => handleDelete(comment.id)}
+                    onClick={() => setConfirmTarget(comment.id)}
                     isLoading={actionLoading === comment.id}
                     disabled={actionLoading !== null}
                   >
@@ -173,6 +173,22 @@ export default function CommentsPage() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmTarget !== null}
+        onClose={() => setConfirmTarget(null)}
+        onConfirm={async () => {
+          if (confirmTarget) {
+            await handleDelete(confirmTarget);
+            setConfirmTarget(null);
+          }
+        }}
+        title="댓글 삭제"
+        description="정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+        confirmText="삭제"
+        variant="danger"
+        isLoading={actionLoading !== null}
+      />
     </div>
   );
 }

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-interface NotifyRequest {
-  postId: string;
-  postTitle: string;
-  authorName: string;
-  content: string;
-  isReply: boolean;
+// HTML 특수문자 이스케이프 (XSS 방지)
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 export async function POST(request: NextRequest) {
@@ -22,8 +24,21 @@ export async function POST(request: NextRequest) {
 
     const resend = new Resend(apiKey);
 
-    const body: NotifyRequest = await request.json();
+    const body = await request.json();
     const { postId, postTitle, authorName, content, isReply } = body;
+
+    // 필수 필드 검증
+    if (
+      !postId || typeof postId !== "string" ||
+      !postTitle || typeof postTitle !== "string" ||
+      !authorName || typeof authorName !== "string" ||
+      !content || typeof content !== "string"
+    ) {
+      return NextResponse.json(
+        { error: "Missing or invalid required fields" },
+        { status: 400 }
+      );
+    }
 
     const adminEmail = process.env.ADMIN_EMAIL;
     if (!adminEmail) {
@@ -40,17 +55,17 @@ export async function POST(request: NextRequest) {
     const { data, error } = await resend.emails.send({
       from: process.env.EMAIL_FROM || "Blog <onboarding@resend.dev>",
       to: adminEmail,
-      subject: `[블로그] 새 ${isReply ? "답글" : "댓글"}: ${postTitle}`,
+      subject: `[블로그] 새 ${isReply ? "답글" : "댓글"}: ${escapeHtml(postTitle)}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">새 ${isReply ? "답글" : "댓글"}이 등록되었습니다</h2>
 
           <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0;"><strong>포스트:</strong> ${postTitle}</p>
-            <p style="margin: 0 0 10px 0;"><strong>작성자:</strong> ${authorName}</p>
+            <p style="margin: 0 0 10px 0;"><strong>포스트:</strong> ${escapeHtml(postTitle)}</p>
+            <p style="margin: 0 0 10px 0;"><strong>작성자:</strong> ${escapeHtml(authorName)}</p>
             <p style="margin: 0;"><strong>내용:</strong></p>
             <div style="background: white; padding: 15px; border-radius: 4px; margin-top: 10px;">
-              ${content.replace(/\n/g, "<br>")}
+              ${escapeHtml(content).replace(/\n/g, "<br>")}
             </div>
           </div>
 

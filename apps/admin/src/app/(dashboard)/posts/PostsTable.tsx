@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@noopdaa/ui";
+import { toast } from "sonner";
+import { Button, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import type { Post } from "@/lib/types";
 
@@ -14,14 +15,18 @@ interface PostsTableProps {
 export function PostsTable({ posts }: PostsTableProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
-
     setDeletingId(id);
     try {
       const supabase = createClient();
-      await supabase.from("posts").delete().eq("id", id);
+      const { error } = await supabase.from("posts").delete().eq("id", id);
+      if (error) {
+        toast.error("포스트 삭제에 실패했습니다.");
+        return;
+      }
+      toast.success("포스트가 삭제되었습니다.");
       router.refresh();
     } finally {
       setDeletingId(null);
@@ -78,7 +83,7 @@ export function PostsTable({ posts }: PostsTableProps) {
               <Button
                 variant="danger"
                 size="sm"
-                onClick={() => handleDelete(post.id)}
+                onClick={() => setConfirmTarget(post.id)}
                 isLoading={deletingId === post.id}
                 disabled={deletingId !== null}
               >
@@ -155,7 +160,7 @@ export function PostsTable({ posts }: PostsTableProps) {
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={() => handleDelete(post.id)}
+                      onClick={() => setConfirmTarget(post.id)}
                       isLoading={deletingId === post.id}
                       disabled={deletingId !== null}
                     >
@@ -168,6 +173,22 @@ export function PostsTable({ posts }: PostsTableProps) {
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmTarget !== null}
+        onClose={() => setConfirmTarget(null)}
+        onConfirm={async () => {
+          if (confirmTarget) {
+            await handleDelete(confirmTarget);
+            setConfirmTarget(null);
+          }
+        }}
+        title="포스트 삭제"
+        description="정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+        confirmText="삭제"
+        variant="danger"
+        isLoading={deletingId !== null}
+      />
     </>
   );
 }

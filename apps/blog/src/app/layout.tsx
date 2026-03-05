@@ -49,18 +49,20 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const settings = await getSiteSettings();
+
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Toaster richColors position="top-center" />
           <PageViewTracker pageType="page" />
-          <Header />
+          <Header siteName={settings?.site_name || "Blog"} />
           <main className="flex-1">{children}</main>
           <Footer />
         </ThemeProvider>

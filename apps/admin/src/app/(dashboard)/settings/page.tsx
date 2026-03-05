@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Button, Card, Input } from "@noopdaa/ui";
+import { toast } from "sonner";
+import { Button, Card, Input, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { ImSpinner8 } from "react-icons/im";
 import { HiOutlineXMark, HiOutlinePlus, HiOutlineBars2 } from "react-icons/hi2";
@@ -32,7 +33,6 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingHero, setIsUploadingHero] = useState(false);
   const [isUploadingOg, setIsUploadingOg] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
   const ogInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +42,9 @@ export default function SettingsPage() {
   const [heroPosts, setHeroPosts] = useState<Post[]>([]);
   const [isPostSelectorOpen, setIsPostSelectorOpen] = useState(false);
   const [isSavingHeroPosts, setIsSavingHeroPosts] = useState(false);
+
+  // 이미지 삭제 확인 모달
+  const [confirmImageType, setConfirmImageType] = useState<"hero" | "og" | null>(null);
 
   // 드래그 앤 드롭 상태
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -98,8 +101,6 @@ export default function SettingsPage() {
     if (!settings || !siteName.trim()) return;
 
     setIsSaving(true);
-    setMessage(null);
-
     const { error } = await supabase
       .from("site_settings")
       .update({
@@ -112,9 +113,9 @@ export default function SettingsPage() {
     setIsSaving(false);
 
     if (error) {
-      setMessage({ type: "error", text: "설정 저장에 실패했습니다." });
+      toast.error("설정 저장에 실패했습니다.");
     } else {
-      setMessage({ type: "success", text: "설정이 저장되었습니다." });
+      toast.success("설정이 저장되었습니다.");
       setSettings({
         ...settings,
         site_name: siteName.trim(),
@@ -135,7 +136,6 @@ export default function SettingsPage() {
     const currentUrl = type === "hero" ? settings.hero_image_url : settings.og_image_url;
 
     setUploading(true);
-    setMessage(null);
 
     const fileExt = file.name.split(".").pop();
     const fileName = `${type}-${Date.now()}.${fileExt}`;
@@ -152,7 +152,7 @@ export default function SettingsPage() {
 
     if (uploadError) {
       setUploading(false);
-      setMessage({ type: "error", text: "이미지 업로드에 실패했습니다." });
+      toast.error("이미지 업로드에 실패했습니다.");
       return;
     }
 
@@ -171,9 +171,9 @@ export default function SettingsPage() {
     setUploading(false);
 
     if (updateError) {
-      setMessage({ type: "error", text: "설정 업데이트에 실패했습니다." });
+      toast.error("설정 업데이트에 실패했습니다.");
     } else {
-      setMessage({ type: "success", text: "이미지가 업로드되었습니다." });
+      toast.success("이미지가 업로드되었습니다.");
       setSettings({ ...settings, [fieldName]: publicUrl });
     }
 
@@ -246,7 +246,6 @@ export default function SettingsPage() {
     if (!settings) return;
 
     setIsSavingHeroPosts(true);
-    setMessage(null);
 
     const { error } = await supabase
       .from("site_settings")
@@ -259,9 +258,9 @@ export default function SettingsPage() {
     setIsSavingHeroPosts(false);
 
     if (error) {
-      setMessage({ type: "error", text: "히어로 포스트 저장에 실패했습니다." });
+      toast.error("히어로 포스트 저장에 실패했습니다.");
     } else {
-      setMessage({ type: "success", text: "히어로 포스트가 저장되었습니다." });
+      toast.success("히어로 포스트가 저장되었습니다.");
       setSettings({ ...settings, hero_post_ids: heroPostIds.length > 0 ? heroPostIds : null });
     }
   };
@@ -277,9 +276,6 @@ export default function SettingsPage() {
     const label = type === "hero" ? "메인 이미지" : "OG 이미지";
 
     if (!currentUrl) return;
-    if (!confirm(`${label}를 삭제하시겠습니까?`)) return;
-
-    setMessage(null);
 
     const oldPath = currentUrl.split("/").slice(-2).join("/");
     await supabase.storage.from("media").remove([oldPath]);
@@ -293,9 +289,9 @@ export default function SettingsPage() {
       .eq("id", settings.id);
 
     if (error) {
-      setMessage({ type: "error", text: "이미지 삭제에 실패했습니다." });
+      toast.error("이미지 삭제에 실패했습니다.");
     } else {
-      setMessage({ type: "success", text: "이미지가 삭제되었습니다." });
+      toast.success("이미지가 삭제되었습니다.");
       setSettings({ ...settings, [fieldName]: null });
     }
   };
@@ -313,18 +309,6 @@ export default function SettingsPage() {
       <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
         블로그 설정
       </h1>
-
-      {message && (
-        <div
-          className={`rounded-lg px-4 py-3 ${
-            message.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* 기본 정보 */}
       <Card className="p-4 sm:p-6">
@@ -406,7 +390,7 @@ export default function SettingsPage() {
             {settings?.hero_image_url && (
               <Button
                 variant="secondary"
-                onClick={() => handleRemoveImage("hero")}
+                onClick={() => setConfirmImageType("hero")}
                 className="flex-1 sm:flex-none"
               >
                 삭제
@@ -598,7 +582,7 @@ export default function SettingsPage() {
             {settings?.og_image_url && (
               <Button
                 variant="secondary"
-                onClick={() => handleRemoveImage("og")}
+                onClick={() => setConfirmImageType("og")}
                 className="flex-1 sm:flex-none"
               >
                 삭제
@@ -610,6 +594,21 @@ export default function SettingsPage() {
           SNS에서 블로그 링크 공유 시 표시되는 이미지입니다. 권장 크기: 1200x630px
         </p>
       </Card>
+
+      <ConfirmModal
+        isOpen={confirmImageType !== null}
+        onClose={() => setConfirmImageType(null)}
+        onConfirm={async () => {
+          if (confirmImageType) {
+            await handleRemoveImage(confirmImageType);
+            setConfirmImageType(null);
+          }
+        }}
+        title="이미지 삭제"
+        description={`${confirmImageType === "hero" ? "메인 이미지" : "OG 이미지"}를 삭제하시겠습니까?`}
+        confirmText="삭제"
+        variant="danger"
+      />
     </div>
   );
 }

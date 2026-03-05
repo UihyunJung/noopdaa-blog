@@ -24,8 +24,9 @@ export function ViewsChart({ data }: ViewsChartProps) {
       // 주의 시작일 (월요일 기준)
       const day = date.getDay();
       const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-      const weekStart = new Date(date.setDate(diff));
-      const weekKey = weekStart.toISOString().split("T")[0] ?? item.date;
+      const weekStart = new Date(date);
+      weekStart.setDate(diff);
+      const weekKey = weekStart.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
 
       if (!weeklyMap.has(weekKey)) {
         weeklyMap.set(weekKey, { views: 0, uniqueVisitors: 0 });

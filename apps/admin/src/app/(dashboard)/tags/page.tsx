@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Button, Input, Card } from "@noopdaa/ui";
+import { Button, Input, Card, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { generateSlug } from "@/lib/utils";
@@ -17,6 +17,7 @@ export default function TagsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -75,7 +76,6 @@ export default function TagsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
     setDeletingId(id);
     try {
       const { error } = await supabase.from("tags").delete().eq("id", id);
@@ -156,7 +156,7 @@ export default function TagsPage() {
                       <HiOutlinePencilSquare className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(tag.id)}
+                      onClick={() => setConfirmTarget(tag.id)}
                       className="text-gray-500 hover:text-red-600 disabled:opacity-50"
                       disabled={deletingId !== null}
                     >
@@ -173,6 +173,21 @@ export default function TagsPage() {
           )}
         </Card>
       </div>
+      <ConfirmModal
+        isOpen={confirmTarget !== null}
+        onClose={() => setConfirmTarget(null)}
+        onConfirm={async () => {
+          if (confirmTarget) {
+            await handleDelete(confirmTarget);
+            setConfirmTarget(null);
+          }
+        }}
+        title="태그 삭제"
+        description="정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+        confirmText="삭제"
+        variant="danger"
+        isLoading={deletingId !== null}
+      />
     </div>
   );
 }
