@@ -1,12 +1,10 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getDateString } from "@/lib/utils";
 import { AnalyticsOverview } from "./components/AnalyticsOverview";
-import { ViewsChart } from "./components/ViewsChart";
 import { TopPosts } from "./components/TopPosts";
 import { ReferrerTable } from "./components/ReferrerTable";
-import { DeviceChart } from "./components/DeviceChart";
 import { BrowserChart } from "./components/BrowserChart";
-import { HourlyChart } from "./components/HourlyChart";
+import { ViewsChartLazy as ViewsChart, DeviceChartLazy as DeviceChart, HourlyChartLazy as HourlyChart } from "./components/ChartLoaders";
 
 export const revalidate = 60;
 

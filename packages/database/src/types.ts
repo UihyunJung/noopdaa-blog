@@ -27,6 +27,18 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
+export type PostTag = Database["public"]["Tables"]["post_tags"]["Row"];
+export type PostTagInsert = Database["public"]["Tables"]["post_tags"]["Insert"];
+export type PostTagUpdate = Database["public"]["Tables"]["post_tags"]["Update"];
+
+export type PageView = Database["public"]["Tables"]["page_views"]["Row"];
+export type PageViewInsert = Database["public"]["Tables"]["page_views"]["Insert"];
+export type PageViewUpdate = Database["public"]["Tables"]["page_views"]["Update"];
+
+export type SiteSettingsRow = Database["public"]["Tables"]["site_settings"]["Row"];
+export type SiteSettingsInsert = Database["public"]["Tables"]["site_settings"]["Insert"];
+export type SiteSettingsUpdate = Database["public"]["Tables"]["site_settings"]["Update"];
+
 export type PostStatus = Database["public"]["Enums"]["post_status"];
 
 // 관계 포함 타입

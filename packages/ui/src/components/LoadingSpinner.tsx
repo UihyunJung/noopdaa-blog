@@ -1,11 +1,13 @@
 "use client";
 
+import { cn } from "../lib/utils";
+
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
 }
 
-export function LoadingSpinner({ size = "md", className = "" }: LoadingSpinnerProps) {
+export function LoadingSpinner({ size = "md", className }: LoadingSpinnerProps) {
   const sizeClasses = {
     sm: "h-4 w-4",
     md: "h-8 w-8",
@@ -14,7 +16,11 @@ export function LoadingSpinner({ size = "md", className = "" }: LoadingSpinnerPr
 
   return (
     <div
-      className={`animate-spin rounded-full border-4 border-gray-200 border-t-primary-600 dark:border-gray-700 dark:border-t-primary-500 ${sizeClasses[size]} ${className}`}
+      className={cn(
+        "animate-spin rounded-full border-4 border-gray-200 border-t-primary-600 dark:border-gray-700 dark:border-t-primary-500",
+        sizeClasses[size],
+        className
+      )}
     />
   );
 }

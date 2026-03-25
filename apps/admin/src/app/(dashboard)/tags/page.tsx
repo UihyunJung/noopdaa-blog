@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button, Input, Card, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LoadingSpinner } from "@noopdaa/ui";
 import { generateSlug } from "@/lib/utils";
 import type { Tag } from "@/lib/types";
 import { HiOutlinePencilSquare, HiOutlineXMark } from "react-icons/hi2";

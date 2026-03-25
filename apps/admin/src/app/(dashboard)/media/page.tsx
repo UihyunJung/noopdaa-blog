@@ -5,7 +5,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { Button, Card, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LoadingSpinner } from "@noopdaa/ui";
 import { formatFileSize } from "@/lib/utils";
 import type { Media, MediaInsert } from "@/lib/types";
 import { ImSpinner8 } from "react-icons/im";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Button, Card, Input, ConfirmModal } from "@noopdaa/ui";
@@ -51,6 +51,12 @@ export default function SettingsPage() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const supabase = createClient();
+
+  // 히어로 포스트 변경 여부 (JSON.stringify 매 렌더 방지)
+  const isHeroPostsChanged = useMemo(
+    () => JSON.stringify(heroPostIds) !== JSON.stringify(settings?.hero_post_ids || []),
+    [heroPostIds, settings?.hero_post_ids]
+  );
 
   useEffect(() => {
     loadSettings();
@@ -529,7 +535,7 @@ export default function SettingsPage() {
           <Button
             onClick={handleSaveHeroPosts}
             isLoading={isSavingHeroPosts}
-            disabled={JSON.stringify(heroPostIds) === JSON.stringify(settings?.hero_post_ids || [])}
+            disabled={!isHeroPostsChanged}
             className="w-full sm:w-auto"
           >
             히어로 포스트 저장

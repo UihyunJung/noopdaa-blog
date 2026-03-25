@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactCompiler: true,
   transpilePackages: ["@noopdaa/ui", "@noopdaa/database"],
   images: {
     remotePatterns: [

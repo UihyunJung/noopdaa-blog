@@ -10,6 +10,7 @@
     "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {
+    "babel-plugin-react-compiler": "^1.0.0",
     "supabase": "^2.70.5",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"

@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { headers } from "next/headers";
+import { createRateLimiter } from "@/lib/rate-limit";
+import { createServerClient } from "@/lib/supabase/server";
+
+// IP 기반 rate limiter (분당 5회)
+const limiter = createRateLimiter({ windowMs: 60_000, max: 5 });
 
 // HTML 특수문자 이스케이프 (XSS 방지)
 function escapeHtml(str: string): string {
@@ -13,6 +19,20 @@ function escapeHtml(str: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const headersList = await headers();
+    const forwardedFor = headersList.get("x-forwarded-for");
+    const realIP = headersList.get("x-real-ip");
+    const ip = forwardedFor?.split(",")[0]?.trim() || realIP || "unknown";
+
+    const { success } = limiter.check(ip);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429 }
+      );
+    }
+
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       console.error("RESEND_API_KEY not configured");
@@ -36,6 +56,32 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Missing or invalid required fields" },
+        { status: 400 }
+      );
+    }
+
+    // 댓글 실존 검증: 해당 포스트에 최근 1분 이내 댓글이 존재하는지 확인
+    const supabase = await createServerClient();
+    const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+    const { data: recentComment, error: queryError } = await supabase
+      .from("comments")
+      .select("id")
+      .eq("post_id", postId)
+      .gte("created_at", oneMinuteAgo)
+      .limit(1)
+      .maybeSingle();
+
+    if (queryError) {
+      console.error("Failed to validate comment existence:", queryError);
+      return NextResponse.json(
+        { error: "Failed to validate comment" },
+        { status: 500 }
+      );
+    }
+
+    if (!recentComment) {
+      return NextResponse.json(
+        { error: "No recent comment found for this post" },
         { status: 400 }
       );
     }

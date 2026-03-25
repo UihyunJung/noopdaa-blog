@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card } from "@noopdaa/ui";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
-interface ViewsChartProps {
+export interface ViewsChartProps {
   data: Array<{
     date: string;
     views: number;

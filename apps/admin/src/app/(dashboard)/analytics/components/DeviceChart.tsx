@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@noopdaa/ui";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 
-interface DeviceChartProps {
+export interface DeviceChartProps {
   data: Array<{
     name: string;
     value: number;

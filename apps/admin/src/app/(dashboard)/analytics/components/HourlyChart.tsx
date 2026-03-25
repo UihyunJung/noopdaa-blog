@@ -3,7 +3,7 @@
 import { Card } from "@noopdaa/ui";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-interface HourlyChartProps {
+export interface HourlyChartProps {
   data: Array<{
     hour: string;
     views: number;

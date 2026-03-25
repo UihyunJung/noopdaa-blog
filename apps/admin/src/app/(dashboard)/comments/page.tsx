@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button, Card, ConfirmModal } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LoadingSpinner } from "@noopdaa/ui";
 import type { Comment, Post } from "@/lib/types";
 
 type CommentWithPost = Comment & { posts: Pick<Post, "title"> | null };
