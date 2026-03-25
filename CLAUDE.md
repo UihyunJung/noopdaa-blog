@@ -53,7 +53,7 @@ apps/
 
 packages/
 ├── ui/               # 공유 컴포넌트 (Button, Input, Card, Spinner) + cn() 유틸
-├── database/         # Supabase auto-generated 타입 (앱에서는 직접 import하지 않고 각 앱의 `@/lib/supabase/` 사용)
+├── database/         # Supabase auto-generated 타입 + 공유 타입 별칭 (`@noopdaa/database/types`로 앱에서 re-export)
 └── config/           # 공유 tsconfig & tailwind 설정
 ```
 
@@ -65,8 +65,8 @@ packages/
 - 쿠키 기반 세션 관리, `NEXT_PUBLIC_COOKIE_DOMAIN`으로 서브도메인 간 세션 공유 가능
 
 **패키지 간 import:**
-- UI: `import { Button, Card } from "@noopdaa/ui"`
-- 타입: `import type { Post, Category } from "@/lib/types"` (각 앱에서 로컬 re-export)
+- UI: `import { Button, Card, LoadingSpinner } from "@noopdaa/ui"`
+- 타입: `import type { Post, Category } from "@/lib/types"` (각 앱에서 `@noopdaa/database/types` re-export)
 - 공통 합성 타입: `PostWithCategory`, `SiteSettings`는 `@/lib/types`에 정의 (중복 선언 금지)
 - `cn()` 유틸: `import { cn } from "@noopdaa/ui"` (clsx + tailwind-merge)
 
@@ -101,7 +101,7 @@ packages/
 - 페이지 이동: Next.js `loading.tsx` 파일 사용 (각 라우트별 스켈레톤 UI)
 - `loading.tsx`는 같은 레벨의 page + 하위 children까지 Suspense로 감싸므로, 형제 라우트와 스켈레톤이 겹칠 경우 route group `()`으로 스코프 분리 필요
 - 필터/검색 등 같은 라우트 내 네비게이션: `useTransition` + `isPending`으로 로딩 표시
-- 컴포넌트 로딩: `LoadingSpinner` 컴포넌트 (`@/components/LoadingSpinner`)
+- 컴포넌트 로딩: `LoadingSpinner`, `PageLoadingSpinner` 컴포넌트 (`@noopdaa/ui`)
 - 버튼 로딩: `Button`의 `isLoading` prop 사용
 - 삭제/수정 작업: 개별 항목 ID로 로딩 상태 추적 (`deletingId`, `actionLoading`)
 
@@ -115,8 +115,14 @@ packages/
 - 마크다운 본문 이미지: `PostContent`의 react-markdown `img` 컴포넌트 (외부 URL 대응)
 - HeroSection, 포스트 상세 커버 이미지에 `priority` 속성 적용
 
+**React Compiler:**
+- `reactCompiler: true` 활성화됨 (blog, admin 양쪽 `next.config.ts`)
+- 자동 메모이제이션이 적용되므로 `useMemo`/`useCallback`이 대부분 불필요
+- 수동 `useMemo`/`useCallback`이 남아있어도 해가 되지 않음 (컴파일러가 무시)
+
 **Dynamic Import:**
-- 큰 클라이언트 라이브러리(Swiper, react-markdown 등)는 `next/dynamic`으로 동적 로드
+- 큰 클라이언트 라이브러리(Swiper, react-markdown, recharts 등)는 `next/dynamic`으로 동적 로드
+- 서버 컴포넌트에서 `ssr: false`를 사용할 경우 별도 클라이언트 래퍼 파일 필요 (예: `ChartLoaders.tsx`)
 - `export const dynamic = "force-dynamic"`와 이름 충돌 시 `import nextDynamic from "next/dynamic"` 사용
 
 **캐싱 전략:**
