@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Button, Input } from "@noopdaa/ui";
-import { createClient } from "@/lib/supabase/client";
 import type { Comment } from "@/lib/types";
 import { HiOutlineArrowUturnLeft, HiOutlinePlus, HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 
@@ -152,14 +151,12 @@ export function Comments({ postId, postTitle }: CommentsProps) {
   const [publicAdminProfile, setPublicAdminProfile] = useState<{ username: string; avatar_url: string | null } | null>(null);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
 
-  const supabase = createClient();
   const commentFormRef = useRef<HTMLFormElement>(null);
   const replyFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     loadComments();
     checkAdmin();
-    loadPublicAdminProfile();
   }, [postId]);
 
   // 답글 폼이 열리면 스크롤
@@ -169,47 +166,34 @@ export function Comments({ postId, postTitle }: CommentsProps) {
     }
   }, [replyTo]);
 
+  // 서버 API로 관리자 체크 (Supabase SDK 미사용)
   const checkAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("username, avatar_url")
-        .eq("id", user.id)
-        .single();
-
-      setIsAdmin(true);
-      setAdminProfile({
-        username: profile?.username || "관리자",
-        email: user.email || "",
-        avatar_url: profile?.avatar_url || null,
-      });
+    try {
+      const res = await fetch("/api/auth/check");
+      const data = await res.json();
+      if (data.isAdmin && data.profile) {
+        setIsAdmin(true);
+        setAdminProfile(data.profile);
+      } else {
+        setIsAdmin(false);
+      }
+    } catch {
+      setIsAdmin(false);
     }
   };
 
-  const loadPublicAdminProfile = async () => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username, avatar_url")
-      .limit(1)
-      .single();
-
-    if (profile) {
-      setPublicAdminProfile({
-        username: profile.username,
-        avatar_url: profile.avatar_url,
-      });
-    }
-  };
-
+  // 서버 API로 댓글 조회 + 공개 관리자 프로필
   const loadComments = async () => {
-    const { data } = await supabase
-      .from("comments")
-      .select("*")
-      .eq("post_id", postId)
-      .eq("is_approved", true)
-      .order("created_at", { ascending: true });
-    setComments((data as CommentWithAdmin[]) || []);
+    try {
+      const res = await fetch(`/api/comments?postId=${postId}`);
+      const data = await res.json();
+      setComments(data.comments || []);
+      if (data.adminProfile) {
+        setPublicAdminProfile(data.adminProfile);
+      }
+    } catch {
+      setComments([]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent, parentId: string | null = null) => {
@@ -227,22 +211,23 @@ export function Comments({ postId, postTitle }: CommentsProps) {
     setIsSubmitting(true);
 
     try {
-      const { data: newComment, error } = await supabase
-        .from("comments")
-        .insert({
-          post_id: postId,
-          parent_id: parentId,
-          author_name: authorName,
-          author_email: authorEmail,
+      // 서버 API로 댓글 작성
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId,
+          parentId,
+          authorName,
+          authorEmail,
           content,
-          is_approved: true,
-          is_admin: isAdmin,
-        })
-        .select()
-        .single();
+          isAdmin,
+        }),
+      });
+      const data = await res.json();
 
-      if (error) {
-        toast.error("댓글 작성에 실패했습니다.");
+      if (!res.ok) {
+        toast.error(data.error || "댓글 작성에 실패했습니다.");
         return;
       }
 
@@ -278,6 +263,7 @@ export function Comments({ postId, postTitle }: CommentsProps) {
       // 댓글 목록 새로고침 후 하이라이트
       await loadComments();
 
+      const newComment = data.comment;
       if (newComment?.id) {
         setHighlightedCommentId(newComment.id);
 

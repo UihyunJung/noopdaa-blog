@@ -60,8 +60,10 @@ packages/
 ## 주요 패턴
 
 **Supabase 클라이언트 사용:**
-- 브라우저: `createClient()` - `@/lib/supabase/client`
+- 브라우저: `createClient()` - `@/lib/supabase/client` (blog에서는 현재 미사용, 향후 확장용으로 유지)
 - 서버: `createServerClient()` - `@/lib/supabase/server`
+- 빌드: `createBuildClient()` - `@/lib/supabase/build` (generateStaticParams 등 빌드 컨텍스트 전용)
+- **blog 댓글**: `Comments.tsx`는 Supabase SDK를 직접 사용하지 않고 서버 API(`/api/auth/check`, `/api/comments`)를 통해 통신. ISR 환경에서 SDK 세션 순환 루프 방지를 위한 설계
 - 쿠키 기반 세션 관리, `NEXT_PUBLIC_COOKIE_DOMAIN`으로 서브도메인 간 세션 공유 가능
 
 **패키지 간 import:**

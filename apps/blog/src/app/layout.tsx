@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import type { SiteSettings } from "@/lib/types";
 import "./globals.scss";
 
@@ -57,10 +58,11 @@ export default async function RootLayout({
   const settings = await getSiteSettings();
 
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Toaster richColors position="top-center" />
+          <ScrollToTop />
           <PageViewTracker pageType="page" />
           <Header siteName={settings?.site_name || "Blog"} />
           <main className="flex-1">{children}</main>
