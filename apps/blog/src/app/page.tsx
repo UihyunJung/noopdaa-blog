@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 
 interface HeroPost {
   id: string;
+  slug: string;
   title: string;
   excerpt: string | null;
   thumbnail_url: string | null;
@@ -46,7 +47,7 @@ export default async function HomePage() {
   if (settings?.hero_post_ids && settings.hero_post_ids.length > 0) {
     const { data: heroPostsData } = await supabase
       .from("posts")
-      .select("id, title, excerpt, thumbnail_url, categories(name, slug)")
+      .select("id, slug, title, excerpt, thumbnail_url, categories(name, slug)")
       .in("id", settings.hero_post_ids)
       .eq("status", "published");
 

@@ -42,9 +42,9 @@ export async function generateMetadata(): Promise<Metadata> {
       images: settings?.og_image_url ? [settings.og_image_url] : undefined,
     },
     verification: {
-      other: {
-        "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || "",
-      },
+      other: process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION
+        ? { "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION }
+        : undefined,
     },
   };
 }

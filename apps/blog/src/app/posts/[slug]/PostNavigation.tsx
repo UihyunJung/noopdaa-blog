@@ -2,8 +2,8 @@ import Link from "next/link";
 import { HiOutlineArrowLeft, HiOutlineArrowRight } from "react-icons/hi2";
 
 interface PostNavigationProps {
-  prevPost: { id: string; title: string } | null;
-  nextPost: { id: string; title: string } | null;
+  prevPost: { slug: string; title: string } | null;
+  nextPost: { slug: string; title: string } | null;
 }
 
 export function PostNavigation({ prevPost, nextPost }: PostNavigationProps) {
@@ -13,7 +13,7 @@ export function PostNavigation({ prevPost, nextPost }: PostNavigationProps) {
     <nav className="my-10 grid gap-4 sm:grid-cols-2">
       {prevPost ? (
         <Link
-          href={`/posts/${prevPost.id}`}
+          href={`/posts/${prevPost.slug}`}
           className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 transition-all hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-primary-700"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-primary-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-primary-950/30" />
@@ -33,7 +33,7 @@ export function PostNavigation({ prevPost, nextPost }: PostNavigationProps) {
 
       {nextPost && (
         <Link
-          href={`/posts/${nextPost.id}`}
+          href={`/posts/${nextPost.slug}`}
           className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 text-right transition-all hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-primary-700"
         >
           <div className="absolute inset-0 bg-gradient-to-l from-primary-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-primary-950/30" />

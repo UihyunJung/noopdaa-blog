@@ -9,6 +9,7 @@ import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { TagInput } from "@/components/editor/TagInput";
 import { ThumbnailPicker, type ThumbnailData } from "@/components/editor/ThumbnailPicker";
 import { generateSlug } from "@/lib/utils";
+import { isValidSlug, ensureUniqueSlug } from "@/lib/slug-utils";
 import type { Post, Category, Tag } from "@/lib/types";
 
 interface PostEditorProps {
@@ -29,6 +30,7 @@ export function PostEditor({
   const [title, setTitle] = useState(post?.title || "");
   const [content, setContent] = useState(post?.content || "");
   const [excerpt, setExcerpt] = useState(post?.excerpt || "");
+  const [slug, setSlug] = useState(post?.slug ?? "");
   const [categoryId, setCategoryId] = useState(post?.category_id || "");
   const [tagNames, setTagNames] = useState<string[]>(selectedTagNames);
   const [status, setStatus] = useState<"draft" | "published">(
@@ -41,9 +43,44 @@ export function PostEditor({
   const [thumbnailData, setThumbnailData] = useState<ThumbnailData | null>(
     post?.thumbnail_url ? { type: "url", value: post.thumbnail_url } : null
   );
+  const [slugSuggestions, setSlugSuggestions] = useState<string[]>([]);
+  const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
 
   // 기존 태그 이름 목록 (자동완성용)
   const existingTagNames = tags.map((tag) => tag.name);
+
+  // AI를 사용하여 slug 제안
+  const handleGenerateSlug = async () => {
+    if (!title.trim()) {
+      toast.error("제목을 먼저 입력해주세요.");
+      return;
+    }
+
+    if (isGeneratingSlug) return;
+
+    setIsGeneratingSlug(true);
+    try {
+      const res = await fetch("/api/generate-slug", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "slug 생성에 실패했습니다.");
+        return;
+      }
+
+      setSlugSuggestions(data.slugs || []);
+    } catch (error) {
+      console.error("slug 생성 요청 실패:", error);
+      toast.error("slug 생성에 실패했습니다.");
+    } finally {
+      setIsGeneratingSlug(false);
+    }
+  };
 
   // 썸네일 업로드 (파일 또는 blob인 경우)
   const uploadThumbnail = async (
@@ -90,8 +127,21 @@ export function PostEditor({
   };
 
   const handleSubmit = async (submitStatus: "draft" | "published") => {
+    if (isLoading) return;
+
     if (!title.trim() || !content.trim()) {
       toast.error("제목과 내용을 입력해주세요.");
+      return;
+    }
+
+    // slug 검증 (비어있지 않으면 draft/published 모두 형식 검증)
+    const trimmedSlug = slug.trim();
+    if (trimmedSlug && !isValidSlug(trimmedSlug)) {
+      toast.error("slug 형식이 올바르지 않습니다. (소문자 영숫자와 하이픈만 허용)");
+      return;
+    }
+    if (submitStatus === "published" && !trimmedSlug) {
+      toast.error("발행하려면 slug를 입력해주세요.");
       return;
     }
 
@@ -117,9 +167,21 @@ export function PostEditor({
       }
     }
 
+    // slug 유니크성 확인
+    let finalSlug: string | null = null;
+    if (trimmedSlug) {
+      try {
+        finalSlug = await ensureUniqueSlug(supabase, trimmedSlug, post?.id);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "slug 저장에 실패했습니다.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const postData = {
       title,
-      slug: post?.slug || `post-${Date.now().toString(36)}`,
+      slug: finalSlug,
       content,
       excerpt: excerpt || content.slice(0, 200),
       thumbnail_url: thumbnailUrl,
@@ -128,7 +190,7 @@ export function PostEditor({
       status: submitStatus,
       meta_title: metaTitle || title,
       meta_description: metaDescription || excerpt || content.slice(0, 160),
-      published_at: submitStatus === "published" ? new Date().toISOString() : null,
+      published_at: submitStatus === "published" ? (post?.published_at || new Date().toISOString()) : null,
     };
 
     let postId = post?.id;
@@ -218,6 +280,51 @@ export function PostEditor({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="포스트 제목을 입력하세요"
         />
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Slug
+          </label>
+          <div className="flex items-center gap-2">
+            <Input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+              placeholder="영문 slug (예: my-blog-post)"
+              className="flex-1"
+            />
+            <Button
+              variant="outline"
+              onClick={handleGenerateSlug}
+              isLoading={isGeneratingSlug}
+              type="button"
+              className="shrink-0"
+            >
+              AI로 생성
+            </Button>
+          </div>
+          {slugSuggestions.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                제안된 slug (클릭하여 선택):
+              </p>
+              <div className="flex flex-wrap gap-2">
+              {slugSuggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => {
+                    setSlug(s);
+                    setSlugSuggestions([]);
+                  }}
+                  className="rounded-full bg-primary-50 px-3 py-1 text-sm text-primary-700 transition-colors hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
+                >
+                  {s}
+                </button>
+              ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">

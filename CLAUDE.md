@@ -39,7 +39,7 @@ apps/
 │       ├── app/      # 포스트, 댓글, RSS, 사이트맵, API 라우트
 │       │   └── posts/
 │       │       ├── (list)/   # route group: 목록 전용 (loading.tsx 스코프 분리)
-│       │       └── [id]/     # 포스트 상세
+│       │       └── [slug]/   # 포스트 상세 (slug 기반 URL)
 │       ├── components/  # Header, Footer, PostCard, HeroSection, Comments 등
 │       └── lib/      # supabase/, types.ts, database.types.ts, analytics/
 └── admin/            # 관리자 대시보드 (포트 3001)
@@ -128,7 +128,7 @@ packages/
 **캐싱 전략:**
 - 블로그 홈: `revalidate = 3600` (1시간)
 - 포스트 목록: `force-dynamic` (검색/필터 지원)
-- 포스트 상세: `force-dynamic` (실시간 조회수 반영)
+- 포스트 상세: `revalidate = 300` (5분 ISR, 조회수는 PageViewTracker로 비동기 처리)
 - admin 통계: `revalidate = 60` (1분)
 
 **다크모드:**
@@ -163,6 +163,9 @@ packages/
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_COOKIE_DOMAIN` (선택, 서브도메인 세션 공유용)
+
+**admin 전용:**
+- `GEMINI_API_KEY` (AI slug 생성, 서버 전용)
 
 **blog 전용:**
 - `RESEND_API_KEY` (이메일 알림)

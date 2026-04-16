@@ -1,10 +1,11 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 import { notFound } from "next/navigation";
 import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { createServerClient } from "@/lib/supabase/server";
+import { createBuildClient } from "@/lib/supabase/build";
 import { PostNavigation } from "./PostNavigation";
 import { Comments } from "./Comments";
 import { ShareButtons } from "./ShareButtons";
@@ -18,29 +19,29 @@ import type { Post, PostWithCategory, Tag } from "@/lib/types";
 import { HiOutlineCalendarDays, HiOutlineEye } from "react-icons/hi2";
 
 interface PostPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
   const supabase = await createServerClient();
 
   const { data: post } = await supabase
     .from("posts")
     .select("*")
-    .eq("id", id)
+    .eq("slug", slug)
     .eq("status", "published")
     .single() as { data: Post | null };
 
-  if (!post) return { title: "포스트를 찾을 수 없습니다" };
+  if (!post || !post.slug) return { title: "포스트를 찾을 수 없습니다" };
 
   return {
     title: post.meta_title || post.title,
     description: post.meta_description || post.excerpt,
     alternates: {
-      canonical: `/posts/${id}`,
+      canonical: `/posts/${post.slug}`,
     },
     openGraph: {
       title: post.meta_title || post.title,
@@ -52,18 +53,29 @@ export async function generateMetadata({
   };
 }
 
+export async function generateStaticParams() {
+  const supabase = createBuildClient();
+  const { data } = await supabase
+    .from("posts")
+    .select("slug")
+    .eq("status", "published");
+  return (data ?? [])
+    .filter((p) => p.slug)
+    .map((p) => ({ slug: p.slug as string }));
+}
+
 export default async function PostPage({ params }: PostPageProps) {
-  const { id } = await params;
+  const { slug } = await params;
   const supabase = await createServerClient();
 
   const { data: post } = await supabase
     .from("posts")
     .select("*, categories(name, slug)")
-    .eq("id", id)
+    .eq("slug", slug)
     .eq("status", "published")
     .single() as { data: PostWithCategory | null };
 
-  if (!post) {
+  if (!post || !post.slug) {
     notFound();
   }
 
@@ -75,10 +87,10 @@ export default async function PostPage({ params }: PostPageProps) {
     { data: nextPost },
   ] = await Promise.all([
     supabase.from("post_tags").select("tags(id, name, slug)").eq("post_id", post.id),
-    supabase.from("posts").select("id, title").eq("status", "published")
+    supabase.from("posts").select("slug, title").eq("status", "published")
       .lt("published_at", post.published_at || post.created_at)
       .order("published_at", { ascending: false }).limit(1).single(),
-    supabase.from("posts").select("id, title").eq("status", "published")
+    supabase.from("posts").select("slug, title").eq("status", "published")
       .gt("published_at", post.published_at || post.created_at)
       .order("published_at", { ascending: true }).limit(1).single(),
   ]);
@@ -87,9 +99,36 @@ export default async function PostPage({ params }: PostPageProps) {
   // 목차 존재 여부 확인 (## 또는 ### 헤딩이 있는지)
   const hasTableOfContents = /^#{2,3}\s+.+$/m.test(post.content);
 
+  // BlogPosting JSON-LD 스키마 생성
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000";
+  const blogPostingSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    datePublished: post.published_at || post.created_at,
+    dateModified: post.updated_at,
+    author: {
+      "@type": "Person",
+      name: "Noopdaa",
+    },
+    description: post.excerpt || post.content.slice(0, 160),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${siteUrl}/posts/${post.slug}`,
+    },
+    url: `${siteUrl}/posts/${post.slug}`,
+    ...(post.thumbnail_url ? { image: post.thumbnail_url } : {}),
+  };
+
   return (
     <article className="min-h-screen">
       <PageViewTracker pageType="post" postId={post.id} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogPostingSchema).replace(/</g, "\\u003c"),
+        }}
+      />
 
       {/* 히어로 헤더 영역 */}
       <header className="relative overflow-hidden border-b border-zinc-200 dark:border-zinc-800">
@@ -183,9 +222,12 @@ export default async function PostPage({ params }: PostPageProps) {
           <div className="min-w-0">
             <PostContent content={post.content} />
 
-            <ShareButtons title={post.title} postId={post.id} />
+            <ShareButtons title={post.title} slug={post.slug} />
 
-            <PostNavigation prevPost={prevPost} nextPost={nextPost} />
+            <PostNavigation
+              prevPost={prevPost as { slug: string; title: string } | null}
+              nextPost={nextPost as { slug: string; title: string } | null}
+            />
 
             <Comments postId={post.id} postTitle={post.title} />
           </div>

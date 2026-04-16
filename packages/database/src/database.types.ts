@@ -200,7 +200,7 @@ export type Database = {
           meta_title: string | null
           og_image: string | null
           published_at: string | null
-          slug: string
+          slug: string | null
           status: Database["public"]["Enums"]["post_status"]
           thumbnail_url: string | null
           title: string
@@ -218,7 +218,7 @@ export type Database = {
           meta_title?: string | null
           og_image?: string | null
           published_at?: string | null
-          slug: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["post_status"]
           thumbnail_url?: string | null
           title: string
@@ -236,7 +236,7 @@ export type Database = {
           meta_title?: string | null
           og_image?: string | null
           published_at?: string | null
-          slug?: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["post_status"]
           thumbnail_url?: string | null
           title?: string

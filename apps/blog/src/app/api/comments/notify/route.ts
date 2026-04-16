@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
     const { data: recentComment, error: queryError } = await supabase
       .from("comments")
-      .select("id")
+      .select("id, posts!inner(slug)")
       .eq("post_id", postId)
       .gte("created_at", oneMinuteAgo)
       .limit(1)
@@ -86,6 +86,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const postsRel = recentComment.posts as { slug: string } | { slug: string }[] | null;
+    const postSlug = Array.isArray(postsRel) ? postsRel[0]?.slug : postsRel?.slug;
+    if (!postSlug) {
+      return NextResponse.json(
+        { error: "Post slug missing" },
+        { status: 500 }
+      );
+    }
+
     const adminEmail = process.env.ADMIN_EMAIL;
     if (!adminEmail) {
       console.error("ADMIN_EMAIL not configured");
@@ -96,7 +105,7 @@ export async function POST(request: NextRequest) {
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const postUrl = `${siteUrl}/posts/${postId}`;
+    const postUrl = `${siteUrl}/posts/${postSlug}`;
 
     const { data, error } = await resend.emails.send({
       from: process.env.EMAIL_FROM || "Blog <onboarding@resend.dev>",

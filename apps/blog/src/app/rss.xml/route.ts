@@ -33,8 +33,8 @@ export async function GET() {
         (post) => `
     <item>
       <title><![CDATA[${escapeXml(post.title)}]]></title>
-      <link>${escapeXml(siteUrl)}/posts/${encodeURIComponent(post.id)}</link>
-      <guid isPermaLink="true">${escapeXml(siteUrl)}/posts/${encodeURIComponent(post.id)}</guid>
+      <link>${escapeXml(siteUrl)}/posts/${post.slug}</link>
+      <guid isPermaLink="false">${escapeXml(siteUrl)}/posts/${encodeURIComponent(post.id)}</guid>
       <description><![CDATA[${escapeXml(post.excerpt || post.content.slice(0, 200))}]]></description>
       <pubDate>${new Date(post.published_at || post.created_at).toUTCString()}</pubDate>
     </item>`

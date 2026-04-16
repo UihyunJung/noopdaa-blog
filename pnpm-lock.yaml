@@ -23,6 +23,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@google/generative-ai':
+        specifier: ^0.19.0
+        version: 0.19.0
       '@noopdaa/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -238,6 +241,10 @@ packages:
 
   '@emnapi/runtime@1.7.1':
     resolution: {integrity: sha512-PVtJr5CmLwYAU9PZDMITZoR5iAOShYREoR45EyyLrbntV50mdePTgUn4AmOw90Ifcj+x2kRjdzr1HP3RrNiHGA==}
+
+  '@google/generative-ai@0.19.0':
+    resolution: {integrity: sha512-iGf/62v3sTwtEJGJY6S5m7PfkglU8hi1URaxqIjiRg1OItV27xyc4aVeR0og8cDkZFkUlGZKv+23bJtT1QWFzQ==}
+    engines: {node: '>=18.0.0'}
 
   '@img/colour@1.0.0':
     resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
@@ -1869,6 +1876,8 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@google/generative-ai@0.19.0': {}
 
   '@img/colour@1.0.0':
     optional: true

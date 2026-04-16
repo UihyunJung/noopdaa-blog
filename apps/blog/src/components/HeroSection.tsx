@@ -12,6 +12,7 @@ import "swiper/css/effect-fade";
 
 interface HeroPost {
   id: string;
+  slug: string;
   title: string;
   excerpt: string | null;
   thumbnail_url: string | null;
@@ -209,7 +210,7 @@ export function HeroSection({
                     )}
                     <div className="mt-6 flex gap-4 sm:mt-8">
                       <Link
-                        href={`/posts/${post.id}`}
+                        href={`/posts/${post.slug}`}
                         className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 shadow-lg transition-all hover:bg-zinc-100 sm:px-6 sm:py-3"
                       >
                         자세히 보기
@@ -224,8 +225,8 @@ export function HeroSection({
         ))}
       </Swiper>
 
-      {/* 커스텀 스타일 */}
-      <style jsx global>{`
+      {/* 커스텀 스타일 — styled-jsx는 dynamic import 시 hydration mismatch 유발하므로 global style 태그 사용 */}
+      <style dangerouslySetInnerHTML={{ __html: `
         .hero-swiper {
           --swiper-pagination-bottom: 24px;
         }
@@ -246,7 +247,7 @@ export function HeroSection({
           width: 48px;
           background: #6366f1;
         }
-      `}</style>
+      ` }} />
     </section>
   );
 }

@@ -6,12 +6,12 @@ import { HiOutlineLink, HiOutlineShare } from "react-icons/hi2";
 
 interface ShareButtonsProps {
   title: string;
-  postId: string;
+  slug: string;
 }
 
-export function ShareButtons({ title, postId }: ShareButtonsProps) {
+export function ShareButtons({ title, slug }: ShareButtonsProps) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://localhost:3000";
-  const url = `${siteUrl}/posts/${postId}`;
+  const url = `${siteUrl}/posts/${slug}`;
 
   const shareLinks = [
     {

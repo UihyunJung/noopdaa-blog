@@ -8,9 +8,11 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
+  if (!post.slug) return null;
+
   return (
     <article className="group">
-      <Link href={`/posts/${post.id}`} className="block">
+      <Link href={`/posts/${post.slug}`} className="block">
         {/* 썸네일 */}
         <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
           {post.thumbnail_url ? (
