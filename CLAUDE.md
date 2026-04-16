@@ -49,7 +49,7 @@ apps/
         │   └── (dashboard)/  # /dashboard/* (인증 필요)
         ├── components/  # PostEditor, Sidebar, StatsCards 등
         ├── lib/      # supabase/, types.ts, database.types.ts
-        └── middleware.ts  # 인증 체크: 미인증 → /login 리다이렉트
+        └── proxy.ts       # 인증 체크: 미인증 → /login 리다이렉트 (Next.js 16 규약)
 
 packages/
 ├── ui/               # 공유 컴포넌트 (Button, Input, Card, Spinner) + cn() 유틸
@@ -77,7 +77,7 @@ packages/
 - `formatDateKR(dateStr)` - 한국어 날짜 포맷
 
 **admin 인증 흐름:**
-- `middleware.ts`가 모든 요청에서 세션 체크
+- `proxy.ts`가 모든 요청에서 세션 체크 (Next.js 16에서 middleware → proxy로 명칭 변경)
 - 미인증 → `/login` 리다이렉트, 인증 완료 시 `/login` → `/dashboard` 리다이렉트
 - 라우트 그룹: `(auth)` = 공개, `(dashboard)` = 보호
 
