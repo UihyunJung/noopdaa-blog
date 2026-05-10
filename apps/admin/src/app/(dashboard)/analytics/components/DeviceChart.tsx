@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card } from "@noopdaa/ui";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 
@@ -13,13 +12,14 @@ export interface DeviceChartProps {
 
 const COLORS = ["#8b5cf6", "#22c55e", "#f59e0b", "#6b7280"];
 
+/**
+ * 디바이스별 방문자 분포 차트.
+ *
+ * 이 컴포넌트는 ChartLoaders.tsx의 `DeviceChartLazy`(dynamic ssr:false)로 import되므로
+ * 항상 client에서만 실행됨. SSR mount 가드(useState/useEffect)는 불필요.
+ */
 export function DeviceChart({ data }: DeviceChartProps) {
-  const [mounted, setMounted] = useState(false);
   const total = data.reduce((sum, item) => sum + item.value, 0);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <Card className="p-4">
@@ -27,33 +27,29 @@ export function DeviceChart({ data }: DeviceChartProps) {
 
       {data.length > 0 && total > 0 ? (
         <div className="flex items-center gap-4">
-          {mounted ? (
-            <PieChart width={120} height={120}>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={30}
-                outerRadius={50}
-                dataKey="value"
-                strokeWidth={0}
-              >
-                {data.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: number) => [value.toLocaleString(), "방문"]}
-                contentStyle={{
-                  backgroundColor: "var(--tooltip-bg, #fff)",
-                  border: "1px solid var(--tooltip-border, #e5e7eb)",
-                  borderRadius: "8px",
-                }}
-              />
-            </PieChart>
-          ) : (
-            <div className="h-[120px] w-[120px]" />
-          )}
+          <PieChart width={120} height={120}>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={30}
+              outerRadius={50}
+              dataKey="value"
+              strokeWidth={0}
+            >
+              {data.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value: number) => [value.toLocaleString(), "방문"]}
+              contentStyle={{
+                backgroundColor: "var(--tooltip-bg, #fff)",
+                border: "1px solid var(--tooltip-border, #e5e7eb)",
+                borderRadius: "8px",
+              }}
+            />
+          </PieChart>
 
           <div className="flex-1 space-y-2">
             {data.map((item, index) => {
