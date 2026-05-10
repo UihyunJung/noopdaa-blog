@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@noopdaa/ui";
+import type { Media } from "@/lib/types";
 import { MediaLibraryModal } from "./MediaLibraryModal";
 import {
   HiOutlineXMark,
@@ -24,12 +26,15 @@ interface ThumbnailPickerProps {
   value: ThumbnailData | null;
   onChange: (data: ThumbnailData | null) => void;
   markdownContent?: string; // AI 생성을 위한 마크다운 내용
+  /** 미디어 라이브러리에 표시할 목록 — 부모 server page가 prefetch */
+  media: Media[];
 }
 
 export function ThumbnailPicker({
   value,
   onChange,
   markdownContent = "",
+  media,
 }: ThumbnailPickerProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
@@ -151,12 +156,25 @@ export function ThumbnailPicker({
       {previewUrl && (
         <div className="relative">
           <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
-            {/* object URL은 next/image에서 사용 불가하므로 img 태그 사용 */}
-            <img
-              src={previewUrl}
-              alt="썸네일 미리보기"
-              className="h-full w-full object-cover"
-            />
+            {value?.type === "url" ? (
+              // 외부 URL(Supabase Storage 등): next/image 정상 사용
+              <Image
+                src={previewUrl}
+                alt="썸네일 미리보기"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
+            ) : (
+              // object URL(file/blob 미리보기): next/image가 origin 제약 때문에 처리 불가
+              // → 정당한 native img 사용 케이스
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewUrl}
+                alt="썸네일 미리보기"
+                className="h-full w-full object-cover"
+              />
+            )}
           </div>
           {value?.type !== "url" && (
             <span className="absolute left-2 top-2 rounded bg-yellow-500 px-2 py-0.5 text-xs font-medium text-white">
@@ -236,6 +254,7 @@ export function ThumbnailPicker({
         isOpen={isMediaModalOpen}
         onClose={() => setIsMediaModalOpen(false)}
         onSelect={handleMediaSelect}
+        media={media}
       />
     </div>
   );

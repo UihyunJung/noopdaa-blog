@@ -10,13 +10,15 @@ import { TagInput } from "@/components/editor/TagInput";
 import { ThumbnailPicker, type ThumbnailData } from "@/components/editor/ThumbnailPicker";
 import { generateSlug } from "@/lib/utils";
 import { isValidSlug, ensureUniqueSlug } from "@/lib/slug-utils";
-import type { Post, Category, Tag } from "@/lib/types";
+import type { Post, Category, Tag, Media } from "@/lib/types";
 
 interface PostEditorProps {
   post?: Post;
   categories: Category[];
   tags: Tag[];
   selectedTagNames?: string[];
+  /** 미디어 라이브러리 — server page가 prefetch하여 주입 */
+  media: Media[];
 }
 
 export function PostEditor({
@@ -24,6 +26,7 @@ export function PostEditor({
   categories,
   tags,
   selectedTagNames = [],
+  media,
 }: PostEditorProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -334,6 +337,7 @@ export function PostEditor({
             value={content}
             onChange={setContent}
             height={500}
+            media={media}
           />
         </div>
 
@@ -401,6 +405,7 @@ export function PostEditor({
             value={thumbnailData}
             onChange={setThumbnailData}
             markdownContent={content}
+            media={media}
           />
         </Card>
 

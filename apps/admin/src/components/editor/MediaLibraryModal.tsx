@@ -1,46 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@noopdaa/ui";
-import { createClient } from "@/lib/supabase/client";
 import { formatFileSize } from "@/lib/utils";
 import type { Media } from "@/lib/types";
 import { HiOutlineXMark } from "react-icons/hi2";
-import { ImSpinner8 } from "react-icons/im";
 
 interface MediaLibraryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (url: string, filename: string) => void;
+  /**
+   * 미디어 목록 — 부모 server component(예: posts/new/page.tsx)가 미리 fetch하여
+   * props로 주입. 모달은 자체 fetch하지 않음 (useEffect + setState 안티패턴 회피).
+   * 신규 업로드 후 갱신은 호출자가 router.refresh()로 처리.
+   */
+  media: Media[];
 }
 
 export function MediaLibraryModal({
   isOpen,
   onClose,
   onSelect,
+  media,
 }: MediaLibraryModalProps) {
-  const [media, setMedia] = useState<Media[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const supabase = createClient();
-
-  useEffect(() => {
-    if (isOpen) {
-      loadMedia();
-    }
-  }, [isOpen]);
-
-  const loadMedia = async () => {
-    setIsLoading(true);
-    const { data } = await supabase
-      .from("media")
-      .select("*")
-      .order("created_at", { ascending: false }) as { data: Media[] | null };
-    setMedia(data || []);
-    setIsLoading(false);
-  };
 
   const filteredMedia = media.filter((item) =>
     item.filename.toLowerCase().includes(searchQuery.toLowerCase())
@@ -89,11 +74,7 @@ export function MediaLibraryModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <ImSpinner8 className="w-8 h-8 animate-spin text-primary-600" />
-            </div>
-          ) : filteredMedia.length === 0 ? (
+          {filteredMedia.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               {searchQuery ? "검색 결과가 없습니다." : "업로드된 미디어가 없습니다."}
             </div>

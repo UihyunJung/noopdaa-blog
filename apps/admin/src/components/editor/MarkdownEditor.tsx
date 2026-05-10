@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import type { ICommand } from "@uiw/react-md-editor";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import type { Media } from "@/lib/types";
 import { MediaLibraryModal } from "./MediaLibraryModal";
 import { HiOutlinePhoto, HiOutlineSquares2X2 } from "react-icons/hi2";
 import { ImSpinner8 } from "react-icons/im";
@@ -15,17 +16,23 @@ interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
   height?: number;
+  /** 미디어 라이브러리에 표시할 목록 — 부모 server page가 prefetch */
+  media: Media[];
 }
 
 export function MarkdownEditor({
   value,
   onChange,
   height = 500,
+  media,
 }: MarkdownEditorProps) {
   const [uploadingCount, setUploadingCount] = useState(0);
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
+  // value를 ref에 동기화 — 비동기 콜백(이미지 업로드 완료 후)에서 최신 value 참조용
   const valueRef = useRef(value);
-  valueRef.current = value;
+  useEffect(() => {
+    valueRef.current = value;
+  });
 
   const { uploadImage } = useImageUpload({
     onUploadStart: () => setUploadingCount((c) => c + 1),
@@ -234,6 +241,7 @@ export function MarkdownEditor({
         isOpen={isMediaLibraryOpen}
         onClose={() => setIsMediaLibraryOpen(false)}
         onSelect={handleMediaLibrarySelect}
+        media={media}
       />
     </div>
   );

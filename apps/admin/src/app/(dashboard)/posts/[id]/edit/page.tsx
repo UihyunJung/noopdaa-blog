@@ -10,12 +10,13 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
   const { id } = await params;
   const supabase = await createServerClient();
 
-  const [{ data: post }, { data: categories }, { data: tags }, { data: postTags }] =
+  const [{ data: post }, { data: categories }, { data: tags }, { data: postTags }, { data: media }] =
     await Promise.all([
       supabase.from("posts").select("*").eq("id", id).single(),
       supabase.from("categories").select("*").order("name"),
       supabase.from("tags").select("*").order("name"),
       supabase.from("post_tags").select("tag_id, tags(name)").eq("post_id", id),
+      supabase.from("media").select("*").order("created_at", { ascending: false }),
     ]);
 
   if (!post) {
@@ -35,6 +36,7 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
         categories={categories || []}
         tags={tags || []}
         selectedTagNames={selectedTagNames}
+        media={media || []}
       />
     </div>
   );
