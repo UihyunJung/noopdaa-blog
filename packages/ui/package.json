@@ -8,9 +8,7 @@
     ".": "./src/index.ts",
     "./styles.css": "./src/styles.css"
   },
-  "scripts": {
-    "lint": "eslint src/"
-  },
+  "scripts": {},
   "dependencies": {
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.6.0"
