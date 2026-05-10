@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HiOutlineListBullet } from "react-icons/hi2";
 
 interface Heading {
@@ -14,22 +14,19 @@ interface TableOfContentsProps {
 }
 
 export function TableOfContents({ content }: TableOfContentsProps) {
-  const [headings, setHeadings] = useState<Heading[]>([]);
   const [activeId, setActiveId] = useState<string>("");
 
-  useEffect(() => {
-    // Markdown에서 헤딩 추출
+  // content prop에서 파생되는 상태 — useMemo로 derived state
+  const headings = useMemo<Heading[]>(() => {
     const matches = content.matchAll(/^(#{2,3})\s+(.+)$/gm);
     const extracted: Heading[] = [];
-
     for (const match of matches) {
       const level = match[1]?.length || 2;
       const text = match[2] || "";
       const id = text.toLowerCase().replace(/\s+/g, "-");
       extracted.push({ id, text, level });
     }
-
-    setHeadings(extracted);
+    return extracted;
   }, [content]);
 
   useEffect(() => {
