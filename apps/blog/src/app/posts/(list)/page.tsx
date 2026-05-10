@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
+import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
 import { PostCard } from "@/components/PostCard";
 import { SearchBar } from "@/components/SearchBar";
@@ -121,12 +122,12 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
             <span className="text-sm text-zinc-500 dark:text-zinc-400">태그:</span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-100 px-3 py-1.5 text-sm font-medium text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
               #{params.tag}
-              <a
+              <Link
                 href="/posts"
                 className="rounded-full p-0.5 transition-colors hover:bg-primary-200 dark:hover:bg-primary-800"
               >
                 <HiOutlineXMark className="h-3.5 w-3.5" />
-              </a>
+              </Link>
             </span>
           </div>
         )}
@@ -135,7 +136,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         {params.q && (
           <div className="mb-8">
             <p className="text-zinc-600 dark:text-zinc-400">
-              <span className="font-medium text-zinc-900 dark:text-white">"{params.q}"</span>
+              <span className="font-medium text-zinc-900 dark:text-white">&ldquo;{params.q}&rdquo;</span>
               {" "}검색 결과 {count || 0}건
             </p>
           </div>
@@ -150,13 +151,13 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                 : "포스트가 없습니다."}
             </p>
             {(params.q || params.category || params.tag) && (
-              <a
+              <Link
                 href="/posts"
                 className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
               >
                 전체 포스트 보기
                 <HiOutlineChevronRight className="h-4 w-4" />
-              </a>
+              </Link>
             )}
           </div>
         ) : (
@@ -171,7 +172,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
             {totalPages > 1 && (
               <div className="mt-12 flex justify-center gap-2">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <a
+                  <Link
                     key={p}
                     href={`/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${params.tag ? `&tag=${encodeURIComponent(params.tag)}` : ""}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
                     className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-all ${
@@ -181,7 +182,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                     }`}
                   >
                     {p}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
