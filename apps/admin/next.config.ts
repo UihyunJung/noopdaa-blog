@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    // /dashboard/media 다중 이미지 업로드용 (FormData 합산 크기)
+    serverActions: {
+      bodySizeLimit: "8mb",
+    },
+  },
 };
 
 export default nextConfig;
