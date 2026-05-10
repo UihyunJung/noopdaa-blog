@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useReducer, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Button, Input } from "@noopdaa/ui";
@@ -138,25 +138,74 @@ function CommentForm({
   );
 }
 
+// 서버 fetch 결과를 단일 dispatch로 적용하기 위한 reducer
+// (react-hooks/set-state-in-effect 규칙 회피용 — useEffect 안에서 setState 여러 번 호출 대신
+//  단일 dispatch로 묶음)
+type CommentsServerState = {
+  comments: CommentWithAdmin[];
+  isAdmin: boolean;
+  adminProfile: AdminProfile | null;
+  publicAdminProfile: { username: string; avatar_url: string | null } | null;
+};
+
+type CommentsAction =
+  | { type: "INIT"; payload: CommentsServerState }
+  | { type: "REFRESH_COMMENTS"; comments: CommentWithAdmin[]; publicAdminProfile: { username: string; avatar_url: string | null } | null };
+
+function commentsReducer(state: CommentsServerState, action: CommentsAction): CommentsServerState {
+  switch (action.type) {
+    case "INIT":
+      return action.payload;
+    case "REFRESH_COMMENTS":
+      return { ...state, comments: action.comments, publicAdminProfile: action.publicAdminProfile ?? state.publicAdminProfile };
+  }
+}
+
+const INITIAL_SERVER_STATE: CommentsServerState = {
+  comments: [],
+  isAdmin: false,
+  adminProfile: null,
+  publicAdminProfile: null,
+};
+
 export function Comments({ postId, postTitle }: CommentsProps) {
-  const [comments, setComments] = useState<CommentWithAdmin[]>([]);
+  const [serverState, dispatch] = useReducer(commentsReducer, INITIAL_SERVER_STATE);
+  const { comments, isAdmin, adminProfile, publicAdminProfile } = serverState;
+
+  // 폼 입력 및 UI 상태 (서버 데이터와 무관)
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [content, setContent] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
-  const [publicAdminProfile, setPublicAdminProfile] = useState<{ username: string; avatar_url: string | null } | null>(null);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
 
   const commentFormRef = useRef<HTMLFormElement>(null);
   const replyFormRef = useRef<HTMLFormElement>(null);
 
+  // 댓글 + 관리자 정보를 병렬로 fetch한 뒤 단일 dispatch로 반영
   useEffect(() => {
-    loadComments();
-    checkAdmin();
+    let cancelled = false;
+    (async () => {
+      const [commentsRes, authRes] = await Promise.all([
+        fetch(`/api/comments?postId=${postId}`).then((r) => r.json()).catch(() => ({ comments: [], adminProfile: null })),
+        fetch("/api/auth/check").then((r) => r.json()).catch(() => ({ isAdmin: false, profile: null })),
+      ]);
+      if (cancelled) return;
+      dispatch({
+        type: "INIT",
+        payload: {
+          comments: commentsRes.comments || [],
+          publicAdminProfile: commentsRes.adminProfile || null,
+          isAdmin: !!authRes.isAdmin,
+          adminProfile: authRes.profile || null,
+        },
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [postId]);
 
   // 답글 폼이 열리면 스크롤
@@ -166,33 +215,18 @@ export function Comments({ postId, postTitle }: CommentsProps) {
     }
   }, [replyTo]);
 
-  // 서버 API로 관리자 체크 (Supabase SDK 미사용)
-  const checkAdmin = async () => {
-    try {
-      const res = await fetch("/api/auth/check");
-      const data = await res.json();
-      if (data.isAdmin && data.profile) {
-        setIsAdmin(true);
-        setAdminProfile(data.profile);
-      } else {
-        setIsAdmin(false);
-      }
-    } catch {
-      setIsAdmin(false);
-    }
-  };
-
-  // 서버 API로 댓글 조회 + 공개 관리자 프로필
-  const loadComments = async () => {
+  // 댓글 작성 후 목록만 다시 가져오기 (작성 핸들러에서 호출 — useEffect 밖이라 규칙 무관)
+  const refreshComments = async () => {
     try {
       const res = await fetch(`/api/comments?postId=${postId}`);
       const data = await res.json();
-      setComments(data.comments || []);
-      if (data.adminProfile) {
-        setPublicAdminProfile(data.adminProfile);
-      }
+      dispatch({
+        type: "REFRESH_COMMENTS",
+        comments: data.comments || [],
+        publicAdminProfile: data.adminProfile || null,
+      });
     } catch {
-      setComments([]);
+      // 무시 (사용자가 페이지 새로고침으로 복구 가능)
     }
   };
 
@@ -261,7 +295,7 @@ export function Comments({ postId, postTitle }: CommentsProps) {
       }
 
       // 댓글 목록 새로고침 후 하이라이트
-      await loadComments();
+      await refreshComments();
 
       const newComment = data.comment;
       if (newComment?.id) {
