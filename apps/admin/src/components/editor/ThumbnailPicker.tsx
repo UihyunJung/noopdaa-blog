@@ -156,25 +156,15 @@ export function ThumbnailPicker({
       {previewUrl && (
         <div className="relative">
           <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
-            {value?.type === "url" ? (
-              // 외부 URL(Supabase Storage 등): next/image 정상 사용
-              <Image
-                src={previewUrl}
-                alt="썸네일 미리보기"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-              />
-            ) : (
-              // object URL(file/blob 미리보기): next/image가 origin 제약 때문에 처리 불가
-              // → 정당한 native img 사용 케이스
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={previewUrl}
-                alt="썸네일 미리보기"
-                className="h-full w-full object-cover"
-              />
-            )}
+            <Image
+              src={previewUrl}
+              alt="썸네일 미리보기"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              // object URL(blob:)은 remotePatterns 매칭이 안 되므로 optimization 우회
+              unoptimized={value?.type !== "url"}
+              className="object-cover"
+            />
           </div>
           {value?.type !== "url" && (
             <span className="absolute left-2 top-2 rounded bg-yellow-500 px-2 py-0.5 text-xs font-medium text-white">
