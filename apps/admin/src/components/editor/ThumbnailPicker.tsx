@@ -41,11 +41,20 @@ export function ThumbnailPicker({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 컴포넌트 언마운트 시 object URL 정리
+  // 언마운트 시점의 최신 value를 cleanup에서 참조하기 위한 ref 동기화
+  // (deps에 value를 직접 넣으면 매 변경마다 cleanup 실행 — 핸들러가 이미 revoke하므로 불필요)
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  });
+
+  // 언마운트 안전망: 마지막 value가 object URL이면 revoke
+  // (정상 흐름에서는 handleFileSelect/handleMediaSelect/handleAIGenerate/handleRemove가 처리)
   useEffect(() => {
     return () => {
-      if (value && (value.type === "file" || value.type === "blob")) {
-        URL.revokeObjectURL(value.value);
+      const current = valueRef.current;
+      if (current && (current.type === "file" || current.type === "blob")) {
+        URL.revokeObjectURL(current.value);
       }
     };
   }, []);

@@ -138,57 +138,53 @@ export function MarkdownEditor({
     [onChange]
   );
 
-  // 커스텀 이미지 업로드 커맨드
-  const imageUploadCommand: ICommand = {
-    name: "image-upload",
-    keyCommand: "image-upload",
-    buttonProps: {
-      "aria-label": "이미지 업로드",
-      title: "이미지 업로드",
-    },
-    icon: <HiOutlinePhoto style={{ width: 12, height: 12 }} />,
-    execute: () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.multiple = true;
-      input.onchange = async (e) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (files && files.length > 0) {
-          await handleImageFiles(files);
-        }
-      };
-      input.click();
-    },
-  };
-
-  // 미디어 라이브러리 커맨드
-  const mediaLibraryCommand: ICommand = {
-    name: "media-library",
-    keyCommand: "media-library",
-    buttonProps: {
-      "aria-label": "미디어 라이브러리",
-      title: "미디어 라이브러리에서 선택",
-    },
-    icon: <HiOutlineSquares2X2 style={{ width: 12, height: 12 }} />,
-    execute: () => {
-      setIsMediaLibraryOpen(true);
-    },
-  };
-
-  // 기본 이미지 커맨드를 커스텀 커맨드로 교체
+  // 기본 이미지 커맨드를 파일 업로드 커맨드로 교체
+  // imageUploadCommand를 별도 변수로 분리하면 매 렌더마다 새 객체 생성 → useCallback deps 만족
+  // 어려움 → 함수 내부에 inline으로 정의해 deps를 `handleImageFiles`로 단순화.
   const commandsFilter = useCallback(
-    (command: ICommand) => {
-      if (command.name === "image") {
-        return imageUploadCommand;
-      }
-      return command;
+    (command: ICommand): ICommand => {
+      if (command.name !== "image") return command;
+      return {
+        name: "image-upload",
+        keyCommand: "image-upload",
+        buttonProps: {
+          "aria-label": "이미지 업로드",
+          title: "이미지 업로드",
+        },
+        icon: <HiOutlinePhoto style={{ width: 12, height: 12 }} />,
+        execute: () => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = "image/*";
+          input.multiple = true;
+          input.onchange = async (e) => {
+            const files = (e.target as HTMLInputElement).files;
+            if (files && files.length > 0) {
+              await handleImageFiles(files);
+            }
+          };
+          input.click();
+        },
+      };
     },
     [handleImageFiles]
   );
 
-  // extraCommands에 미디어 라이브러리 추가
-  const extraCommands: ICommand[] = [mediaLibraryCommand];
+  // 미디어 라이브러리 커맨드 — setIsMediaLibraryOpen은 useState setter라 stable
+  const extraCommands: ICommand[] = [
+    {
+      name: "media-library",
+      keyCommand: "media-library",
+      buttonProps: {
+        "aria-label": "미디어 라이브러리",
+        title: "미디어 라이브러리에서 선택",
+      },
+      icon: <HiOutlineSquares2X2 style={{ width: 12, height: 12 }} />,
+      execute: () => {
+        setIsMediaLibraryOpen(true);
+      },
+    },
+  ];
 
   return (
     <div className="relative">
