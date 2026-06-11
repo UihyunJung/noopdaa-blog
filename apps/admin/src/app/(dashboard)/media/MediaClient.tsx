@@ -49,7 +49,7 @@ export function MediaClient({ initialMedia }: MediaClientProps) {
     const target = confirmTarget;
     setActionTargetId(target.id);
     startDeleteTransition(async () => {
-      const result = await deleteMedia(target.id, target.url);
+      const result = await deleteMedia(target.id);
       setActionTargetId(null);
       setConfirmTarget(null);
       if (!result.ok) {

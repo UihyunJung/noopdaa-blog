@@ -4,6 +4,11 @@ import { createServerClient } from "@/lib/supabase/server";
 import { createRateLimiter } from "@/lib/rate-limit";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const EMAIL_REGEX = /^[^@]+@[^@]+\.[^@]+$/;
+
+// author_email(PII)은 공개 응답에서 제외 — DB 컬럼 권한(REVOKE)과 함께 이중 방어
+const PUBLIC_COMMENT_COLUMNS =
+  "id, post_id, parent_id, author_name, content, created_at, is_admin, is_approved";
 
 // IP 기반 rate limiter (분당 5회, 댓글 작성 전용)
 const limiter = createRateLimiter({ windowMs: 60_000, max: 5 });
@@ -28,7 +33,7 @@ export async function GET(request: NextRequest) {
     const [{ data: comments }, { data: adminProfile }] = await Promise.all([
       supabase
         .from("comments")
-        .select("*")
+        .select(PUBLIC_COMMENT_COLUMNS)
         .eq("post_id", postId)
         .eq("is_approved", true)
         .order("created_at", { ascending: true }),
@@ -97,7 +102,7 @@ export async function POST(request: NextRequest) {
     if (!trimmedName || trimmedName.length > 50) {
       return NextResponse.json({ error: "이름은 1~50자여야 합니다." }, { status: 400 });
     }
-    if (!trimmedEmail || trimmedEmail.length > 254) {
+    if (!trimmedEmail || trimmedEmail.length > 254 || !EMAIL_REGEX.test(trimmedEmail)) {
       return NextResponse.json({ error: "이메일 형식이 올바르지 않습니다." }, { status: 400 });
     }
     if (!trimmedContent || trimmedContent.length > 5000) {
@@ -105,6 +110,21 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createServerClient();
+
+    // parentId 검증: UUID 형식 + 같은 포스트의 댓글인지 확인 (교차 포스트 답글 방지)
+    if (parentId != null) {
+      if (typeof parentId !== "string" || !UUID_REGEX.test(parentId)) {
+        return NextResponse.json({ error: "잘못된 parentId 형식입니다." }, { status: 400 });
+      }
+      const { data: parent } = await supabase
+        .from("comments")
+        .select("id, post_id")
+        .eq("id", parentId)
+        .maybeSingle();
+      if (!parent || parent.post_id !== postId) {
+        return NextResponse.json({ error: "답글 대상 댓글을 찾을 수 없습니다." }, { status: 400 });
+      }
+    }
 
     // isAdmin 서버 재검증: 클라이언트가 isAdmin: true를 보내도 서버에서 실제 관리자인지 확인
     let verifiedIsAdmin = false;
@@ -125,7 +145,8 @@ export async function POST(request: NextRequest) {
         is_approved: true,
         is_admin: verifiedIsAdmin,
       })
-      .select()
+      // author_email 컬럼 권한 회수(anon) 후에도 RETURNING이 실패하지 않도록 공개 컬럼만 반환
+      .select(PUBLIC_COMMENT_COLUMNS)
       .single();
 
     if (error) {

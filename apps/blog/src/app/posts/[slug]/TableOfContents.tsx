@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import GithubSlugger from "github-slugger";
 import { HiOutlineListBullet } from "react-icons/hi2";
 
 interface Heading {
@@ -13,18 +14,33 @@ interface TableOfContentsProps {
   content: string;
 }
 
+// 헤딩 텍스트의 인라인 마크다운(코드·볼드·링크 등) 제거
+// — rehype-slug가 렌더링된 텍스트로 id를 만들므로 동일한 입력으로 맞춤
+function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1") // 이미지
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // 링크
+    .replace(/`([^`]*)`/g, "$1") // 인라인 코드
+    .replace(/\*\*([^*]+)\*\*/g, "$1") // 볼드
+    .replace(/__([^_]+)__/g, "$1") // 볼드
+    .replace(/\*([^*]+)\*/g, "$1") // 이탤릭
+    .replace(/_([^_]+)_/g, "$1") // 이탤릭
+    .replace(/~~([^~]+)~~/g, "$1"); // 취소선
+}
+
 export function TableOfContents({ content }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>("");
 
   // content prop에서 파생되는 상태 — useMemo로 derived state
+  // id는 rehype-slug(PostContent)와 동일하게 github-slugger로 생성 (중복 헤딩 -1 suffix 포함)
   const headings = useMemo<Heading[]>(() => {
+    const slugger = new GithubSlugger();
     const matches = content.matchAll(/^(#{2,3})\s+(.+)$/gm);
     const extracted: Heading[] = [];
     for (const match of matches) {
       const level = match[1]?.length || 2;
-      const text = match[2] || "";
-      const id = text.toLowerCase().replace(/\s+/g, "-");
-      extracted.push({ id, text, level });
+      const text = stripInlineMarkdown(match[2] || "");
+      extracted.push({ id: slugger.slug(text), text, level });
     }
     return extracted;
   }, [content]);

@@ -9,10 +9,10 @@ import { HiOutlineArrowUturnLeft, HiOutlinePlus, HiOutlineChatBubbleLeftRight } 
 
 interface CommentsProps {
   postId: string;
-  postTitle?: string;
 }
 
-type CommentWithAdmin = Comment & { is_admin?: boolean };
+// 공개 API는 author_email(PII)을 반환하지 않음
+type CommentWithAdmin = Omit<Comment, "author_email">;
 
 interface AdminProfile {
   username: string;
@@ -168,7 +168,7 @@ const INITIAL_SERVER_STATE: CommentsServerState = {
   publicAdminProfile: null,
 };
 
-export function Comments({ postId, postTitle }: CommentsProps) {
+export function Comments({ postId }: CommentsProps) {
   const [serverState, dispatch] = useReducer(commentsReducer, INITIAL_SERVER_STATE);
   const { comments, isAdmin, adminProfile, publicAdminProfile } = serverState;
 
@@ -266,18 +266,13 @@ export function Comments({ postId, postTitle }: CommentsProps) {
       }
 
       // 관리자가 아닌 경우에만 이메일 알림 발송
-      if (!isAdmin && postTitle) {
+      // 서버가 commentId로 DB에서 직접 내용을 조회하므로 본문은 보내지 않음
+      if (!isAdmin && data.comment?.id) {
         try {
           await fetch("/api/comments/notify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              postId,
-              postTitle,
-              authorName,
-              content,
-              isReply: !!parentId,
-            }),
+            body: JSON.stringify({ commentId: data.comment.id }),
           });
         } catch (e) {
           console.error("Failed to send notification:", e);

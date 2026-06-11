@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { FaXTwitter, FaFacebookF, FaThreads, FaInstagram } from "react-icons/fa6";
+import { FaXTwitter, FaFacebookF, FaThreads } from "react-icons/fa6";
 import { HiOutlineLink, HiOutlineShare } from "react-icons/hi2";
 
 interface ShareButtonsProps {
@@ -29,11 +29,7 @@ export function ShareButtons({ title, slug }: ShareButtonsProps) {
       url: `https://www.threads.net/intent/post?text=${encodeURIComponent(title + " " + url)}`,
       icon: <FaThreads className="h-5 w-5" />,
     },
-    {
-      name: "Instagram",
-      url: `https://www.instagram.com/`,
-      icon: <FaInstagram className="h-5 w-5" />,
-    },
+    // Instagram은 웹 공유 intent가 없어 제외 (홈으로만 이동했었음)
   ];
 
   const handleCopyLink = async () => {

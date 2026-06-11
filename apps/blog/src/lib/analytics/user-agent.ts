@@ -12,7 +12,8 @@ const BOT_PATTERNS = [
   /ia_archiver/i,
   /crawler/i,
   /spider/i,
-  /bot/i,
+  // 단어 경계 + cubot(폰 브랜드) 제외 — "Googlebot/2.1", "FooBot 1.0" 등은 매칭
+  /(?<!cu)bot\b/i,
   /lighthouse/i,
   /pagespeed/i,
 ];

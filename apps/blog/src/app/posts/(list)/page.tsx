@@ -22,7 +22,8 @@ interface PostsPageProps {
 
 export default async function PostsPage({ searchParams }: PostsPageProps) {
   const params = await searchParams;
-  const page = parseInt(params.page || "1");
+  // 비숫자/음수 page 파라미터 방어 (NaN·음수 range는 쿼리 오류 유발)
+  const page = Math.max(1, parseInt(params.page || "1", 10) || 1);
   const perPage = 9;
 
   const supabase = await createServerClient();
@@ -68,9 +69,12 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   }
 
   if (params.q) {
-    // ilike 특수문자(%_\) 이스케이프
-    const escaped = params.q.replace(/[%_\\]/g, (c) => "\\" + c);
-    query = query.or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`);
+    // 1) LIKE 와일드카드(%_\) 이스케이프
+    const likeEscaped = params.q.replace(/[\\%_]/g, (c) => "\\" + c);
+    // 2) PostgREST quoted literal 이스케이프(\, ") 후 큰따옴표로 감싸기
+    //    — 검색어에 쉼표/괄호가 있어도 or() 필터 구분자와 충돌하지 않음
+    const quoted = likeEscaped.replace(/(["\\])/g, "\\$1");
+    query = query.or(`title.ilike."%${quoted}%",content.ilike."%${quoted}%"`);
   }
 
   const result = await query

@@ -7,6 +7,8 @@ import { createServerClient } from "@/lib/supabase/server";
 // IP 기반 rate limiter (분당 5회)
 const limiter = createRateLimiter({ windowMs: 60_000, max: 5 });
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 // HTML 특수문자 이스케이프 (XSS 방지)
 function escapeHtml(str: string): string {
   return str
@@ -45,50 +47,47 @@ export async function POST(request: NextRequest) {
     const resend = new Resend(apiKey);
 
     const body = await request.json();
-    const { postId, postTitle, authorName, content, isReply } = body;
+    const { commentId } = body;
 
-    // 필수 필드 검증
-    if (
-      !postId || typeof postId !== "string" ||
-      !postTitle || typeof postTitle !== "string" ||
-      !authorName || typeof authorName !== "string" ||
-      !content || typeof content !== "string"
-    ) {
+    if (!commentId || typeof commentId !== "string" || !UUID_REGEX.test(commentId)) {
       return NextResponse.json(
-        { error: "Missing or invalid required fields" },
+        { error: "Invalid commentId" },
         { status: 400 }
       );
     }
 
-    // 댓글 실존 검증: 해당 포스트에 최근 1분 이내 댓글이 존재하는지 확인
+    // 메일 내용은 클라이언트 입력을 신뢰하지 않고 DB에서 직접 조회 (내용 위조 방지)
+    // 1분 이내 작성된 댓글만 허용 — 오래된 댓글 id 재사용 스팸 차단
     const supabase = await createServerClient();
     const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
-    const { data: recentComment, error: queryError } = await supabase
+    const { data: comment, error: queryError } = await supabase
       .from("comments")
-      .select("id, posts!inner(slug)")
-      .eq("post_id", postId)
+      .select("author_name, content, parent_id, posts!inner(title, slug)")
+      .eq("id", commentId)
       .gte("created_at", oneMinuteAgo)
-      .limit(1)
       .maybeSingle();
 
     if (queryError) {
-      console.error("Failed to validate comment existence:", queryError);
+      console.error("Failed to load comment for notification:", queryError);
       return NextResponse.json(
         { error: "Failed to validate comment" },
         { status: 500 }
       );
     }
 
-    if (!recentComment) {
+    if (!comment) {
       return NextResponse.json(
-        { error: "No recent comment found for this post" },
+        { error: "No recent comment found" },
         { status: 400 }
       );
     }
 
-    const postsRel = recentComment.posts as { slug: string } | { slug: string }[] | null;
-    const postSlug = Array.isArray(postsRel) ? postsRel[0]?.slug : postsRel?.slug;
-    if (!postSlug) {
+    const postsRel = comment.posts as
+      | { title: string; slug: string | null }
+      | { title: string; slug: string | null }[]
+      | null;
+    const post = Array.isArray(postsRel) ? postsRel[0] : postsRel;
+    if (!post?.slug) {
       return NextResponse.json(
         { error: "Post slug missing" },
         { status: 500 }
@@ -104,23 +103,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const isReply = !!comment.parent_id;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const postUrl = `${siteUrl}/posts/${postSlug}`;
+    const postUrl = `${siteUrl}/posts/${post.slug}`;
 
     const { data, error } = await resend.emails.send({
       from: process.env.EMAIL_FROM || "Blog <onboarding@resend.dev>",
       to: adminEmail,
-      subject: `[블로그] 새 ${isReply ? "답글" : "댓글"}: ${escapeHtml(postTitle)}`,
+      subject: `[블로그] 새 ${isReply ? "답글" : "댓글"}: ${escapeHtml(post.title)}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">새 ${isReply ? "답글" : "댓글"}이 등록되었습니다</h2>
 
           <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0;"><strong>포스트:</strong> ${escapeHtml(postTitle)}</p>
-            <p style="margin: 0 0 10px 0;"><strong>작성자:</strong> ${escapeHtml(authorName)}</p>
+            <p style="margin: 0 0 10px 0;"><strong>포스트:</strong> ${escapeHtml(post.title)}</p>
+            <p style="margin: 0 0 10px 0;"><strong>작성자:</strong> ${escapeHtml(comment.author_name)}</p>
             <p style="margin: 0;"><strong>내용:</strong></p>
             <div style="background: white; padding: 15px; border-radius: 4px; margin-top: 10px;">
-              ${escapeHtml(content).replace(/\n/g, "<br>")}
+              ${escapeHtml(comment.content).replace(/\n/g, "<br>")}
             </div>
           </div>
 

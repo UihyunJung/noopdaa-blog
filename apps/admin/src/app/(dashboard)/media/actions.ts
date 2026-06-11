@@ -4,6 +4,16 @@ import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { requireAuthAction, type ActionResult } from "@/lib/auth-actions";
 
+// 이미지 전용 allowlist (SVG는 스크립트 포함 가능하므로 제외)
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+]);
+const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "gif", "webp", "avif"]);
+
 export async function uploadMedia(
   formData: FormData
 ): Promise<ActionResult<{ uploaded: number; failed: string[] }>> {
@@ -20,7 +30,14 @@ export async function uploadMedia(
   const failed: string[] = [];
 
   for (const file of files) {
-    const fileExt = file.name.split(".").pop();
+    const fileExt = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+    // 서버 측 타입/확장자 검증 (클라이언트 accept 속성은 우회 가능)
+    if (!ALLOWED_MIME_TYPES.has(file.type) || !ALLOWED_EXTENSIONS.has(fileExt)) {
+      failed.push(file.name);
+      continue;
+    }
+
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
     const filePath = `uploads/${fileName}`;
 
@@ -56,14 +73,24 @@ export async function uploadMedia(
   return { ok: true, data: { uploaded, failed } };
 }
 
-export async function deleteMedia(id: string, url: string): Promise<ActionResult> {
+export async function deleteMedia(id: string): Promise<ActionResult> {
   const auth = await requireAuthAction();
   if (!auth.ok) return auth;
 
-  const urlParts = url.split("/");
-  const filePath = `uploads/${urlParts[urlParts.length - 1]}`;
-
   const supabase = await createServerClient();
+
+  // 클라이언트가 보낸 url 대신 DB 레코드 기준으로 storage 경로 결정
+  const { data: item } = await supabase
+    .from("media")
+    .select("url")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!item) {
+    return { ok: false, error: "미디어를 찾을 수 없습니다." };
+  }
+
+  const filePath = `uploads/${item.url.split("/").pop()}`;
   await supabase.storage.from("media").remove([filePath]);
   const { error } = await supabase.from("media").delete().eq("id", id);
 

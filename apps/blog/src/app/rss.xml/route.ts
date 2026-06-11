@@ -32,10 +32,10 @@ export async function GET() {
       ?.map(
         (post) => `
     <item>
-      <title><![CDATA[${escapeXml(post.title)}]]></title>
+      <title>${escapeXml(post.title)}</title>
       <link>${escapeXml(siteUrl)}/posts/${post.slug}</link>
       <guid isPermaLink="false">${escapeXml(siteUrl)}/posts/${encodeURIComponent(post.id)}</guid>
-      <description><![CDATA[${escapeXml(post.excerpt || post.content.slice(0, 200))}]]></description>
+      <description>${escapeXml(post.excerpt || post.content.slice(0, 200))}</description>
       <pubDate>${new Date(post.published_at || post.created_at).toUTCString()}</pubDate>
     </item>`
       )

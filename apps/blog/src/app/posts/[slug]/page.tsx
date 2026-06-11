@@ -229,7 +229,7 @@ export default async function PostPage({ params }: PostPageProps) {
               nextPost={nextPost as { slug: string; title: string } | null}
             />
 
-            <Comments postId={post.id} postTitle={post.title} />
+            <Comments postId={post.id} />
           </div>
 
           {/* Sidebar - 목차가 있을 때만 표시 */}
