@@ -6,7 +6,8 @@
     "dev:admin": "turbo dev --filter=admin",
     "dev:blog": "turbo dev --filter=blog",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "node scripts/check-env.mjs && turbo lint",
+    "check-env": "node scripts/check-env.mjs",
     "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {

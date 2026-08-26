@@ -11,7 +11,7 @@ Turborepo 기반의 모던 블로그 플랫폼입니다.
 - **빌드**: Turborepo, pnpm
 - **최적화**: React Compiler
 - **이메일**: Resend
-- **AI**: Google Gemini 2.5 Flash (slug 생성)
+- **AI**: Google Gemini 2.5 Flash (slug 생성), Groq Llama 3.1 + Pollinations.ai (커버 이미지 생성)
 
 ## 프로젝트 구조
 
@@ -54,9 +54,15 @@ RESEND_API_KEY=your-resend-api-key
 ADMIN_EMAIL=admin@example.com
 EMAIL_FROM=noreply@example.com
 
-# apps/admin/.env.local (AI slug 생성용)
-GEMINI_API_KEY=your-gemini-api-key
+# apps/admin/.env.local (AI 기능용)
+GEMINI_API_KEY=your-gemini-api-key   # slug 생성
+GROQ_API_KEY=your-groq-api-key       # 커버 이미지 프롬프트 생성
 ```
+
+> **서버 전용 변수를 새로 추가할 때는 `turbo.json`의 `tasks.build.env` 배열에도 등록해야 합니다.**
+> Turborepo strict 모드에서 선언되지 않은 변수는 빌드에 전달되지 않고 캐시 해시에도 반영되지 않아,
+> 값을 바꿔도 예전 빌드 결과가 재사용됩니다. `NEXT_PUBLIC_*`는 자동 포함되므로 예외입니다.
+> 누락 시 `pnpm check-env`(빌드 시 자동 실행)가 빌드를 중단시킵니다.
 
 ### 개발 서버 실행
 
@@ -93,6 +99,7 @@ pnpm build
 ### 관리자 (admin)
 - 포스트 작성/편집 (마크다운 에디터, 이미지 드래그 앤 드롭)
 - AI 기반 영문 slug 자동 생성 (Gemini 2.5 Flash)
+- AI 커버 이미지 자동 생성 (Groq으로 프롬프트 생성 → Pollinations.ai로 이미지 생성)
 - 카테고리/태그/댓글/미디어 관리
 - 방문자 통계 대시보드 (일별 조회수, 디바이스, 브라우저, 유입경로)
 - 블로그 설정 (히어로 슬라이드, OG 이미지)

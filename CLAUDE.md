@@ -22,6 +22,7 @@ pnpm dev:admin        # 관리자만 실행
 # 빌드 & 린트
 pnpm build            # 전체 빌드 (Turbo 캐싱 사용)
 pnpm lint             # 전체 린트
+pnpm check-env        # turbo.json env 선언 누락 검사 (빌드 시 자동 실행)
 pnpm clean            # 캐시 및 node_modules 삭제
 
 # 데이터베이스 타입 (packages/database 디렉토리에서 실행)
@@ -168,9 +169,31 @@ packages/
 
 **admin 전용:**
 - `GEMINI_API_KEY` (AI slug 생성, 서버 전용)
+- `GROQ_API_KEY` (커버 이미지 프롬프트 생성, 서버 전용)
 
 **blog 전용:**
 - `RESEND_API_KEY` (이메일 알림)
 - `ADMIN_EMAIL`
 - `EMAIL_FROM`
 - `NEXT_PUBLIC_NAVER_SITE_VERIFICATION` (선택)
+
+### 환경 변수 추가 시 필수 절차
+
+서버 전용 변수(`NEXT_PUBLIC_` 접두사가 **없는** 변수)를 새로 추가할 때는 `turbo.json`의 `tasks.build.env` 배열에도 **반드시 등록**한다.
+
+Turborepo는 2.0부터 strict 모드가 기본이라, 선언되지 않은 변수는 빌드 태스크에 전달되지 않고 캐시 해시에도 반영되지 않는다. 값을 바꿔도 해시가 그대로여서 예전 빌드 결과가 재사용되므로, preview 설정이 production에 그대로 배포되는 사고로 이어질 수 있다.
+
+`NEXT_PUBLIC_*`는 Turborepo 프레임워크 추론이 자동 포함하므로 별도 선언이 필요 없다.
+
+등록해야 할 곳:
+
+| 위치 | 목적 |
+|---|---|
+| `apps/*/.env.local` | 로컬 개발 |
+| `apps/*/.env.example` | 문서화 |
+| `turbo.json`의 `tasks.build.env` | strict 모드 전달 + 캐시 해시 |
+| Vercel 프로젝트 Environment Variables | 배포 런타임 |
+
+Vercel 등록 시 API 키는 **Secret** 유형(값 재확인 불가, 빌드 로그 자동 마스킹)으로 하고 **Production 환경을 반드시 체크**한다. Secret은 Development 환경을 지원하지 않으므로 로컬은 `.env.local`을 사용한다. 등록 후 재배포해야 반영된다.
+
+`turbo.json` 등록 누락은 `scripts/check-env.mjs`가 자동으로 잡는다. 소스의 `process.env` 참조와 `.env.example` 키를 `turbo.json` 선언과 대조하며, 각 앱의 `build` 스크립트 앞단에서 실행되므로 **누락 시 Vercel 배포가 실패**한다. 로컬에서는 `pnpm check-env`로 단독 실행할 수 있다.
