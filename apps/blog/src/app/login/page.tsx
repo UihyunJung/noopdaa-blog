@@ -71,7 +71,8 @@ export default function LoginPage() {
       const check = await fetchAuthCheck(true);
 
       if (!check.isAdmin) {
-        await supabase.auth.signOut();
+        // scope: "local" — 이 브라우저의 로그인만 되돌린다 (다른 기기 세션 유지)
+        await supabase.auth.signOut({ scope: "local" });
         setError(
           "관리자 계정이 아니거나 세션을 저장하지 못했습니다. 쿠키 설정을 확인해주세요."
         );
@@ -94,7 +95,8 @@ export default function LoginPage() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await createClient().auth.signOut();
+      // scope: "local" — 기본값 "global"은 admin 앱 세션까지 함께 폐기한다 (Header 참고)
+      await createClient().auth.signOut({ scope: "local" });
       toast.success("로그아웃했습니다.");
       window.location.href = "/";
     } catch (err) {

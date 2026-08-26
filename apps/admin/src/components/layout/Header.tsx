@@ -16,7 +16,10 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   const handleLogout = async () => {
     const supabase = createClient();
-    await supabase.auth.signOut();
+    // scope: "local" — 기본값 "global"은 이 사용자의 모든 기기·브라우저 세션을
+    // 서버에서 폐기해 blog 앱까지 함께 로그아웃된다. admin 로그아웃은
+    // 이 브라우저의 admin 세션만 끝내야 한다
+    await supabase.auth.signOut({ scope: "local" });
     router.push("/login");
     router.refresh();
   };

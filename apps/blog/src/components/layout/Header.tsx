@@ -53,7 +53,10 @@ export function Header({ siteName }: HeaderProps) {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
-      await createClient().auth.signOut();
+      // scope: "local" — 기본값 "global"은 이 사용자의 모든 기기·브라우저 세션을
+      // 서버에서 폐기해 admin 앱까지 함께 로그아웃된다. 블로그 로그아웃은
+      // 이 브라우저의 블로그 세션만 끝내야 한다
+      await createClient().auth.signOut({ scope: "local" });
       toast.success("로그아웃했습니다.");
       // 현재 페이지를 그대로 다시 로드해 서버 컴포넌트에도 로그아웃을 반영
       window.location.reload();
