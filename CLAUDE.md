@@ -73,6 +73,8 @@ packages/
 - `ADMIN_EMAIL` 미설정 시 항상 false (fail-closed). 서버 전용 변수라 클라이언트에 노출되지 않는다
 - `/api/auth/check`(배지 표시 여부)와 `/api/comments`(INSERT 시 `is_admin`) 양쪽에서 동일하게 사용. 한쪽만 고치면 판정이 어긋난다
 - blog `/login`은 로그인 후 `/api/auth/check`로 세션 저장과 관리자 여부를 재확인하고, 실패 시 `signOut()` 후 에러를 표시한다 (쿠키가 저장되지 않았는데 성공한 것처럼 보이는 상황 방지)
+- 클라이언트에서 `/api/auth/check`를 호출할 때는 **반드시 `fetchAuthCheck()` - `@/lib/auth-client`를 사용**한다. 해당 엔드포인트에 IP 기준 rate limit(분당 10회)이 걸려 있어, Header와 Comments가 각각 직접 `fetch`하면 방문자가 포스트를 빠르게 넘길 때 429에 걸린다. 모듈 레벨에서 요청을 공유하며, 로그인 직후 재확인은 `fetchAuthCheck(true)`
+- 헤더 로그인/로그아웃 버튼은 `?next=<현재 경로>`로 복귀 경로를 넘긴다. `next`는 내부 경로만 허용 (open redirect 방지)
 
 **패키지 간 import:**
 - UI: `import { Button, Card, LoadingSpinner } from "@noopdaa/ui"`

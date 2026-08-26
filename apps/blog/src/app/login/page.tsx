@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Button, Input, LoadingSpinner } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAuthCheck } from "@/lib/auth-client";
 
 /**
  * 로그인 후 이동할 경로 검증.
@@ -32,9 +33,7 @@ export default function LoginPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch("/api/auth/check")
-        .then((r) => r.json())
-        .catch(() => ({ isAdmin: false, profile: null }));
+      const res = await fetchAuthCheck();
       if (cancelled) return;
       setStatus(
         res.isAdmin
@@ -69,9 +68,7 @@ export default function LoginPage() {
       // 세션 쿠키가 실제로 저장됐는지, 그리고 관리자 계정인지 서버에서 확인.
       // 쿠키 도메인 설정이 현재 호스트와 맞지 않으면 로그인 자체는 성공해도
       // 브라우저가 쿠키를 버려 아무 일도 일어나지 않는다. 그 경우를 여기서 잡아낸다.
-      const check = await fetch("/api/auth/check")
-        .then((r) => r.json())
-        .catch(() => ({ isAdmin: false }));
+      const check = await fetchAuthCheck(true);
 
       if (!check.isAdmin) {
         await supabase.auth.signOut();

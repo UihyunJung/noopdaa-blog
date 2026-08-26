@@ -5,6 +5,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { Button, Input } from "@noopdaa/ui";
 import type { Comment } from "@/lib/types";
+import { fetchAuthCheck } from "@/lib/auth-client";
 import { HiOutlineArrowUturnLeft, HiOutlinePlus, HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 
 interface CommentsProps {
@@ -190,7 +191,8 @@ export function Comments({ postId }: CommentsProps) {
     (async () => {
       const [commentsRes, authRes] = await Promise.all([
         fetch(`/api/comments?postId=${postId}`).then((r) => r.json()).catch(() => ({ comments: [], adminProfile: null })),
-        fetch("/api/auth/check").then((r) => r.json()).catch(() => ({ isAdmin: false, profile: null })),
+        // Header와 요청을 공유한다 (auth-client 참고)
+        fetchAuthCheck(),
       ]);
       if (cancelled) return;
       dispatch({

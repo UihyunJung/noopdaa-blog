@@ -2,17 +2,34 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { HiOutlineMoon, HiOutlineSun, HiOutlineBars3, HiOutlineXMark } from "react-icons/hi2";
+import { toast } from "sonner";
+import {
+  HiOutlineMoon,
+  HiOutlineSun,
+  HiOutlineBars3,
+  HiOutlineXMark,
+  HiOutlineArrowRightOnRectangle,
+  HiOutlineArrowLeftOnRectangle,
+} from "react-icons/hi2";
+import { createClient } from "@/lib/supabase/client";
+import { fetchAuthCheck } from "@/lib/auth-client";
 
 interface HeaderProps {
   siteName: string;
 }
 
+// 로그인 여부 확인 전에는 버튼을 그리지 않는다 (관리자에게 '로그인'이 잠깐 보이는 것 방지)
+type AuthState = { checked: boolean; isAdmin: boolean };
+
 export function Header({ siteName }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [auth, setAuth] = useState<AuthState>({ checked: false, isAdmin: false });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,10 +39,40 @@ export function Header({ siteName }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchAuthCheck().then((res) => {
+      if (!cancelled) setAuth({ checked: true, isAdmin: res.isAdmin });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await createClient().auth.signOut();
+      toast.success("로그아웃했습니다.");
+      // 현재 페이지를 그대로 다시 로드해 서버 컴포넌트에도 로그아웃을 반영
+      window.location.reload();
+    } catch (err) {
+      console.error("로그아웃 오류:", err);
+      toast.error("로그아웃에 실패했습니다.");
+      setIsLoggingOut(false);
+    }
+  };
+
   const navigation = [
     { name: "홈", href: "/" },
     { name: "포스트", href: "/posts" },
   ];
+
+  // 로그인 후 원래 보던 페이지로 돌아오도록 현재 경로를 넘긴다
+  const loginHref = `/login?next=${encodeURIComponent(pathname)}`;
+  // /login에서는 헤더 버튼이 중복이므로 숨긴다
+  const showAuthButton = auth.checked && pathname !== "/login";
 
   return (
     <header
@@ -64,6 +111,26 @@ export function Header({ siteName }: HeaderProps) {
 
             <div className="ml-2 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
 
+            {showAuthButton &&
+              (auth.isAdmin ? (
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="ml-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                >
+                  <HiOutlineArrowLeftOnRectangle className="h-4 w-4" />
+                  로그아웃
+                </button>
+              ) : (
+                <Link
+                  href={loginHref}
+                  className="ml-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                >
+                  <HiOutlineArrowRightOnRectangle className="h-4 w-4" />
+                  로그인
+                </Link>
+              ))}
+
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="ml-2 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
@@ -101,6 +168,30 @@ export function Header({ siteName }: HeaderProps) {
                   {item.name}
                 </Link>
               ))}
+              {showAuthButton &&
+                (auth.isAdmin ? (
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleLogout();
+                    }}
+                    disabled={isLoggingOut}
+                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  >
+                    <HiOutlineArrowLeftOnRectangle className="h-5 w-5" />
+                    로그아웃
+                  </button>
+                ) : (
+                  <Link
+                    href={loginHref}
+                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <HiOutlineArrowRightOnRectangle className="h-5 w-5" />
+                    로그인
+                  </Link>
+                ))}
+
               <button
                 onClick={() => {
                   setTheme(theme === "dark" ? "light" : "dark");
