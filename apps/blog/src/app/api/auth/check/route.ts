@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { createServerClient } from "@/lib/supabase/server";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { isAdminUser } from "@/lib/auth";
 
 // IP 기반 rate limiter (분당 10회)
 const limiter = createRateLimiter({ windowMs: 60_000, max: 10 });
@@ -25,7 +26,8 @@ export async function GET() {
     const supabase = await createServerClient();
     const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (error || !user) {
+    // 로그인 사실만으로는 관리자가 아니다 — ADMIN_EMAIL과 대조
+    if (error || !user || !isAdminUser(user)) {
       return NextResponse.json({ isAdmin: false, profile: null });
     }
 

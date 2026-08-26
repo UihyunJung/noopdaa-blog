@@ -61,11 +61,18 @@ packages/
 ## 주요 패턴
 
 **Supabase 클라이언트 사용:**
-- 브라우저: `createClient()` - `@/lib/supabase/client` (blog에서는 현재 미사용, 향후 확장용으로 유지)
+- 브라우저: `createClient()` - `@/lib/supabase/client` (blog에서는 `/login`의 로그인·로그아웃에만 사용)
 - 서버: `createServerClient()` - `@/lib/supabase/server`
 - 빌드: `createBuildClient()` - `@/lib/supabase/build` (generateStaticParams 등 빌드 컨텍스트 전용)
 - **blog 댓글**: `Comments.tsx`는 Supabase SDK를 직접 사용하지 않고 서버 API(`/api/auth/check`, `/api/comments`)를 통해 통신. ISR 환경에서 SDK 세션 순환 루프 방지를 위한 설계
-- 쿠키 기반 세션 관리, `NEXT_PUBLIC_COOKIE_DOMAIN`으로 서브도메인 간 세션 공유 가능
+- 쿠키 기반 세션 관리, `NEXT_PUBLIC_COOKIE_DOMAIN`으로 서브도메인 간 세션 공유 가능. 값이 접속 중인 호스트와 맞지 않으면 브라우저가 세션 쿠키를 조용히 버리므로, 도메인이 다른 환경에서는 반드시 비워둔다
+
+**관리자 판정 (blog):**
+- `isAdminUser()` - `@/lib/auth`. **`ADMIN_EMAIL`과 일치하는 계정만 관리자로 인정한다**
+- 세션 존재 여부(`!!user`)로 판정하지 말 것. Supabase anon key는 설계상 공개 값이라, 계정을 만들 수 있는 사람은 누구나 관리자 배지를 달 수 있게 된다
+- `ADMIN_EMAIL` 미설정 시 항상 false (fail-closed). 서버 전용 변수라 클라이언트에 노출되지 않는다
+- `/api/auth/check`(배지 표시 여부)와 `/api/comments`(INSERT 시 `is_admin`) 양쪽에서 동일하게 사용. 한쪽만 고치면 판정이 어긋난다
+- blog `/login`은 로그인 후 `/api/auth/check`로 세션 저장과 관리자 여부를 재확인하고, 실패 시 `signOut()` 후 에러를 표시한다 (쿠키가 저장되지 않았는데 성공한 것처럼 보이는 상황 방지)
 
 **패키지 간 import:**
 - UI: `import { Button, Card, LoadingSpinner } from "@noopdaa/ui"`

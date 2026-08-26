@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { createServerClient } from "@/lib/supabase/server";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { isAdminUser } from "@/lib/auth";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const EMAIL_REGEX = /^[^@]+@[^@]+\.[^@]+$/;
@@ -126,11 +127,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // isAdmin 서버 재검증: 클라이언트가 isAdmin: true를 보내도 서버에서 실제 관리자인지 확인
+    // isAdmin 서버 재검증: 클라이언트가 isAdmin: true를 보내도 서버에서 실제 관리자인지 확인.
+    // 세션 존재 여부가 아니라 ADMIN_EMAIL 대조로 판정한다 (isAdminUser 참고)
     let verifiedIsAdmin = false;
     if (isAdmin) {
       const { data: { user } } = await supabase.auth.getUser();
-      verifiedIsAdmin = !!user;
+      verifiedIsAdmin = isAdminUser(user);
     }
 
     // 댓글 INSERT
