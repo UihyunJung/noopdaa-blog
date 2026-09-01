@@ -149,6 +149,14 @@ packages/
 - Vercel Hobby 플랜은 cron이 하루 1회로 제한되지만, 임계값이 7일이라 충분하다
 - 라우트는 `CRON_SECRET` 미설정 시 요청을 거부한다 (fail-closed). Vercel에 값을 등록해야 Cron이 `Authorization: Bearer` 헤더를 붙인다
 
+**프로덕션 도메인 구성:**
+- blog → `noopdaa.com` (apex가 정식 주소, `www`는 308 리다이렉트)
+- admin → `admin.noopdaa.com`
+- 양쪽 프로덕션에 `NEXT_PUBLIC_COOKIE_DOMAIN=.noopdaa.com` 설정 → 한 브라우저 안에서 blog↔admin 세션 공유 (댓글 관리자 배지)
+- **로컬은 이 값을 반드시 비워둔다.** `localhost`는 `.noopdaa.com` 쿠키를 받지 못해 로그인이 조용히 깨진다
+- 메일 발신은 `noreply@noopdaa.com` (Resend에 DKIM/SPF/DMARC 등록됨). 도메인을 바꾸면 Resend 재인증이 필요하다
+- SEO 출력(canonical·sitemap·RSS·robots·JSON-LD)은 전부 `NEXT_PUBLIC_SITE_URL` 하나에서 파생된다. 도메인 변경 시 이 변수만 바꾸고 재배포하면 된다
+
 **다크모드:**
 - `next-themes` 사용, class 기반 (`darkMode: "class"`)
 - 커스텀 primary 컬러 팔레트 (indigo 계열)
