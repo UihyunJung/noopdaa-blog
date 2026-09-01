@@ -143,6 +143,12 @@ packages/
 - 포스트 상세: `revalidate = 300` (5분 ISR, 조회수는 PageViewTracker로 비동기 처리)
 - admin 통계: `revalidate = 60` (1분)
 
+**Supabase keep-alive (blog):**
+- Supabase 무료 플랜은 7일간 활동이 없으면 프로젝트를 자동 일시정지한다. 정지되면 DB/Auth/Storage가 모두 멈춘다
+- `apps/blog/vercel.json`의 cron이 매일 1회 `/api/cron/keep-alive`를 호출해 가벼운 count 쿼리로 활동 기록을 남긴다
+- Vercel Hobby 플랜은 cron이 하루 1회로 제한되지만, 임계값이 7일이라 충분하다
+- 라우트는 `CRON_SECRET` 미설정 시 요청을 거부한다 (fail-closed). Vercel에 값을 등록해야 Cron이 `Authorization: Bearer` 헤더를 붙인다
+
 **다크모드:**
 - `next-themes` 사용, class 기반 (`darkMode: "class"`)
 - 커스텀 primary 컬러 팔레트 (indigo 계열)
@@ -185,6 +191,7 @@ packages/
 - `ADMIN_EMAIL`
 - `EMAIL_FROM`
 - `NEXT_PUBLIC_NAVER_SITE_VERIFICATION` (선택)
+- `CRON_SECRET` (Vercel Cron 인증, 서버 전용)
 
 ### 환경 변수 추가 시 필수 절차
 
