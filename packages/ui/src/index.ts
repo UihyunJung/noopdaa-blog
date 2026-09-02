@@ -5,3 +5,4 @@ export * from "./components/Spinner";
 export * from "./components/LoadingSpinner";
 export * from "./components/ConfirmModal";
 export * from "./lib/utils";
+export * from "./lib/markdown";
