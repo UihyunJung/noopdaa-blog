@@ -9,6 +9,7 @@ type ImageType = "hero" | "og";
 interface SiteInfoInput {
   siteName: string;
   siteDescription: string;
+  siteIntro: string;
 }
 
 async function getSettingsId(): Promise<string | null> {
@@ -33,6 +34,7 @@ export async function updateSiteInfo(input: SiteInfoInput): Promise<ActionResult
     .update({
       site_name: siteName,
       site_description: input.siteDescription.trim() || null,
+      site_intro: input.siteIntro.trim() || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", settingsId);
@@ -157,7 +159,7 @@ export async function updateHeroPosts(postIds: string[]): Promise<ActionResult> 
     })
     .eq("id", settingsId);
 
-  if (error) return { ok: false, error: "히어로 포스트 저장에 실패했습니다." };
+  if (error) return { ok: false, error: "추천 글 저장에 실패했습니다." };
 
   revalidatePath("/dashboard/settings");
   revalidatePath("/", "layout");

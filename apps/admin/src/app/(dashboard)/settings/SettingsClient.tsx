@@ -17,6 +17,7 @@ export interface SiteSettings {
   id: string;
   site_name: string;
   site_description: string | null;
+  site_intro: string | null;
   hero_image_url: string | null;
   og_image_url: string | null;
   hero_post_ids: string[] | null;
@@ -39,6 +40,7 @@ export function SettingsClient({ settings, allPosts }: SettingsClientProps) {
   // 사이트 정보
   const [siteName, setSiteName] = useState(settings.site_name);
   const [siteDescription, setSiteDescription] = useState(settings.site_description ?? "");
+  const [siteIntro, setSiteIntro] = useState(settings.site_intro ?? "");
   const [isSavePending, startSaveTransition] = useTransition();
 
   // 이미지 업로드
@@ -48,14 +50,14 @@ export function SettingsClient({ settings, allPosts }: SettingsClientProps) {
   const [isOgPending, startOgTransition] = useTransition();
   const [confirmImageType, setConfirmImageType] = useState<"hero" | "og" | null>(null);
 
-  // 히어로 포스트
+  // 추천 글 (hero_post_ids)
   const [heroPostIds, setHeroPostIds] = useState<string[]>(settings.hero_post_ids ?? []);
   const [isPostSelectorOpen, setIsPostSelectorOpen] = useState(false);
   const [isHeroPostsPending, startHeroPostsTransition] = useTransition();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  // 히어로 포스트 정보 — heroPostIds + allPosts에서 파생
+  // 추천 글 (hero_post_ids) 정보 — heroPostIds + allPosts에서 파생
   const heroPosts = useMemo<Post[]>(() => {
     if (heroPostIds.length === 0) return [];
     return heroPostIds
@@ -77,7 +79,7 @@ export function SettingsClient({ settings, allPosts }: SettingsClientProps) {
   const handleSaveSiteInfo = () => {
     if (!siteName.trim()) return;
     startSaveTransition(async () => {
-      const result = await updateSiteInfo({ siteName, siteDescription });
+      const result = await updateSiteInfo({ siteName, siteDescription, siteIntro });
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -177,7 +179,7 @@ export function SettingsClient({ settings, allPosts }: SettingsClientProps) {
         toast.error(result.error);
         return;
       }
-      toast.success("히어로 포스트가 저장되었습니다.");
+      toast.success("추천 글이 저장되었습니다.");
     });
   };
 
@@ -211,6 +213,12 @@ export function SettingsClient({ settings, allPosts }: SettingsClientProps) {
               placeholder="블로그 설명을 입력하세요"
             />
           </div>
+          <Input
+            label="홈 한 줄 소개"
+            value={siteIntro}
+            onChange={(e) => setSiteIntro(e.target.value)}
+            placeholder="홈 큰 제목 옆에 붙는 한 줄 소개 (비우면 표시되지 않음)"
+          />
           <Button
             onClick={handleSaveSiteInfo}
             isLoading={isSavePending}
@@ -221,14 +229,14 @@ export function SettingsClient({ settings, allPosts }: SettingsClientProps) {
           </Button>
         </div>
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          블로그명과 설명은 메타 태그, OG 태그, 헤더, Hero 섹션에 사용됩니다.
+          블로그명은 헤더와 메타 태그에, 블로그 설명은 홈 상단 큰 제목과 메타·OG 설명에, 한 줄 소개는 홈 큰 제목 옆에 표시됩니다.
         </p>
       </Card>
 
       {/* 메인 이미지 */}
       <Card className="p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          메인 이미지 (Hero 배경)
+          대문 이미지
         </h2>
         <div className="space-y-4">
           {settings.hero_image_url ? (
@@ -276,14 +284,14 @@ export function SettingsClient({ settings, allPosts }: SettingsClientProps) {
           </div>
         </div>
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          홈페이지 Hero 섹션의 배경 이미지입니다. 권장 비율: 21:9
+          홈 맨 위에 어둡게 덮지 않고 그대로 보여줍니다. 권장 비율 3:1, 가로 1500px 이상
         </p>
       </Card>
 
       {/* 히어로 포스트 */}
       <Card className="p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-          히어로 슬라이드 포스트
+          추천 글
         </h2>
         <div className="space-y-4">
           {heroPosts.length > 0 ? (
@@ -403,11 +411,11 @@ export function SettingsClient({ settings, allPosts }: SettingsClientProps) {
             disabled={!isHeroPostsChanged}
             className="w-full sm:w-auto"
           >
-            히어로 포스트 저장
+            추천 글 저장
           </Button>
         </div>
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          홈페이지 Hero 섹션에 슬라이드로 표시할 포스트를 선택하세요 (최대 3개). 드래그하여 순서를 변경할 수 있습니다. 포스트의 커버 이미지가 배경으로 사용됩니다.
+          홈 &lsquo;추천 글&rsquo; 영역에 고정으로 보여줄 포스트를 고르세요 (최대 3개). 첫 번째 글이 크게, 나머지가 옆에 작게 놓입니다. 드래그해서 순서를 바꿀 수 있습니다.
         </p>
       </Card>
 

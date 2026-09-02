@@ -289,6 +289,7 @@ export type Database = {
           id: string
           og_image_url: string | null
           site_description: string | null
+          site_intro: string | null
           site_name: string
           updated_at: string
         }
@@ -298,6 +299,7 @@ export type Database = {
           id?: string
           og_image_url?: string | null
           site_description?: string | null
+          site_intro?: string | null
           site_name?: string
           updated_at?: string
         }
@@ -307,6 +309,7 @@ export type Database = {
           id?: string
           og_image_url?: string | null
           site_description?: string | null
+          site_intro?: string | null
           site_name?: string
           updated_at?: string
         }

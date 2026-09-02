@@ -340,6 +340,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   site_name TEXT DEFAULT '눞다''s Blog' NOT NULL,
   site_description TEXT DEFAULT '',
+  site_intro TEXT,
   hero_image_url TEXT,
   og_image_url TEXT,
   hero_post_ids TEXT[],

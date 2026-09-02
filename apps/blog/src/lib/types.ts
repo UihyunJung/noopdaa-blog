@@ -38,6 +38,7 @@ export type {
 export interface SiteSettings {
   site_name: string;
   site_description: string | null;
+  site_intro?: string | null;
   og_image_url: string | null;
   hero_image_url?: string | null;
   hero_post_ids?: string[] | null;
