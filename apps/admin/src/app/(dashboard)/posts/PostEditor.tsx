@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Button, Input, Card } from "@noopdaa/ui";
+import { Button, Input, Card, makeExcerpt } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { MarkdownEditor } from "@/components/editor/MarkdownEditor";
 import { TagInput } from "@/components/editor/TagInput";
@@ -186,13 +186,14 @@ export function PostEditor({
       title,
       slug: finalSlug,
       content,
-      excerpt: excerpt || content.slice(0, 200),
+      // 자동 발췌는 마크다운 기호를 걷어낸 텍스트로 만든다 (목록·메타에 원문 기호가 노출되지 않도록)
+      excerpt: excerpt || makeExcerpt(content, 200),
       thumbnail_url: thumbnailUrl,
       category_id: categoryId || null,
       author_id: user.id,
       status: submitStatus,
       meta_title: metaTitle || title,
-      meta_description: metaDescription || excerpt || content.slice(0, 160),
+      meta_description: metaDescription || excerpt || makeExcerpt(content, 160),
       published_at: submitStatus === "published" ? (post?.published_at || new Date().toISOString()) : null,
     };
 

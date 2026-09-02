@@ -1,3 +1,4 @@
+import { makeExcerpt } from "@noopdaa/ui";
 import { createServerClient } from "@/lib/supabase/server";
 
 function escapeXml(str: string): string {
@@ -35,7 +36,7 @@ export async function GET() {
       <title>${escapeXml(post.title)}</title>
       <link>${escapeXml(siteUrl)}/posts/${post.slug}</link>
       <guid isPermaLink="false">${escapeXml(siteUrl)}/posts/${encodeURIComponent(post.id)}</guid>
-      <description>${escapeXml(post.excerpt || post.content.slice(0, 200))}</description>
+      <description>${escapeXml(makeExcerpt(post.excerpt || post.content, 200))}</description>
       <pubDate>${new Date(post.published_at || post.created_at).toUTCString()}</pubDate>
     </item>`
       )

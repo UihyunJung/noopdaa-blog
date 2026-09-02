@@ -9,6 +9,7 @@ interface CategoryFilterProps {
   currentCategory?: string;
 }
 
+// 카테고리 탭 — 알약 대신 밑줄로 활성 표시 (필터 바 안에서 가로 스크롤)
 export function CategoryFilter({
   categories,
   currentCategory,
@@ -22,17 +23,20 @@ export function CategoryFilter({
     });
   };
 
+  const tabClass = (active: boolean) =>
+    `shrink-0 px-2.5 pb-3 pt-3.5 text-sm transition-colors ${
+      active
+        ? "font-semibold text-ink shadow-[inset_0_-2px_0_var(--ink)]"
+        : "font-medium text-ink-2 hover:text-ink"
+    } ${isPending ? "opacity-60" : ""}`;
+
   return (
-    <div className="flex flex-wrap gap-2">
+    <nav className="-mx-1 flex items-center gap-1 overflow-x-auto px-1" aria-label="카테고리">
       <button
         type="button"
         onClick={() => handleClick()}
         disabled={isPending && !currentCategory}
-        className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-          !currentCategory
-            ? "bg-primary-600 text-white shadow-md shadow-primary-600/25"
-            : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-        } ${isPending ? "opacity-60" : ""}`}
+        className={tabClass(!currentCategory)}
       >
         전체
       </button>
@@ -42,15 +46,11 @@ export function CategoryFilter({
           key={category.id}
           onClick={() => handleClick(category.slug)}
           disabled={isPending}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-            currentCategory === category.slug
-              ? "bg-primary-600 text-white shadow-md shadow-primary-600/25"
-              : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-          } ${isPending ? "opacity-60" : ""}`}
+          className={tabClass(currentCategory === category.slug)}
         >
           {category.name}
         </button>
       ))}
-    </div>
+    </nav>
   );
 }

@@ -133,7 +133,7 @@ packages/
 - 수동 `useMemo`/`useCallback`이 남아있어도 해가 되지 않음 (컴파일러가 무시)
 
 **Dynamic Import:**
-- 큰 클라이언트 라이브러리(Swiper, react-markdown, recharts 등)는 `next/dynamic`으로 동적 로드
+- 큰 클라이언트 라이브러리(react-markdown, recharts 등)는 `next/dynamic`으로 동적 로드
 - 서버 컴포넌트에서 `ssr: false`를 사용할 경우 별도 클라이언트 래퍼 파일 필요 (예: `ChartLoaders.tsx`)
 - `export const dynamic = "force-dynamic"`와 이름 충돌 시 `import nextDynamic from "next/dynamic"` 사용
 
@@ -157,6 +157,15 @@ packages/
 - 메일 발신은 `noreply@noopdaa.com` (Resend에 DKIM/SPF/DMARC 등록됨). 도메인을 바꾸면 Resend 재인증이 필요하다
 - SEO 출력(canonical·sitemap·RSS·robots·JSON-LD)은 전부 `NEXT_PUBLIC_SITE_URL` 하나에서 파생된다. 도메인 변경 시 이 변수만 바꾸고 재배포하면 된다
 
+**디자인 시스템 (blog, "잉크와 여백"):**
+- 색은 `globals.scss`의 CSS 변수(`--paper`, `--ink`, `--line`, `--accent` 등)로 정의하고 `.dark`에서 값만 바꾼다. Tailwind에서는 `bg-paper` `bg-paper-2` `bg-paper-3` `text-ink` `text-ink-2` `text-ink-3` `border-line` `text-accent` `bg-accent-soft`로 쓴다 (`packages/config/tailwind.config.ts`). 색마다 `dark:` 변형을 붙이지 않는다
+- 변수 기반 색이라 `bg-ink/60` 같은 투명도 수식어는 동작하지 않는다. 필요하면 `opacity-*`를 쓴다
+- 폰트는 `apps/blog/src/app/fonts.ts`에서 next/font로 로드한다: 본문 Pretendard(`font-sans`, npm `pretendard` 패키지의 woff2를 `next/font/local`로 셀프 호스팅), 제목 Hahmlet(`font-serif`), 날짜·메타 Fira Code(`font-mono`)
+- 카드·그림자·블러·그라데이션 대신 1px 선(`border-line`)과 여백으로 구획한다. 인디고(`accent`)는 카테고리 라벨·링크 hover·활성 상태·관리자 배지에만 쓴다. 기본 버튼은 먹색(`bg-ink text-paper`)
+- 날짜 표시는 `formatDateDot()` - `@/lib/format` ("2026.04.04", KST). 발췌·메타 설명·RSS는 `stripMarkdown()`/`makeExcerpt()` - `@noopdaa/ui`로 마크다운 기호를 걷어낸 뒤 쓴다 (admin 자동 발췌도 동일)
+- 홈 구성: 대문 이미지(`hero_image_url`, 오버레이 없이 그대로) → 좌우명(`site_description`) + 한 줄 소개(`site_intro`, 비우면 숨김) → 카테고리 줄 → 추천 글(`hero_post_ids`, 첫 글 크게) → 최근 포스트 목록(`PostRow`)
+- 디자인 시안(캔버스)과 코드가 어긋나면 코드가 아니라 시안을 먼저 의심한다. 시안은 썸네일을 자리표시자로 그렸다
+
 **다크모드:**
 - `next-themes` 사용, class 기반 (`darkMode: "class"`)
 - 커스텀 primary 컬러 팔레트 (indigo 계열)
@@ -169,6 +178,7 @@ packages/
 - `posts.view_count`: `page_views` INSERT 시 DB 트리거(`sync_post_view_count`)로 자동 +1 (RPC 직접 호출 금지)
 - `comments`: `is_approved` DB 기본값 false이나, blog에서 댓글 작성 시 `is_approved: true`로 삽입 (즉시 노출). `parent_id`로 대댓글 지원
 - `post_tags`: 다대다 관계 조인 테이블
+- `site_settings`: `site_intro`는 홈 한 줄 소개(nullable, admin 블로그 설정 > 기본 정보). `hero_post_ids`는 admin에서 '추천 글'로 부른다 (최대 3개, 순서 유지)
 - RLS 정책: 공개 데이터 SELECT 허용, CUD는 인증 필요
 
 스토리지: `media` 버킷 (경로: `uploads/{timestamp}-{random}.{ext}`)

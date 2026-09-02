@@ -23,21 +23,24 @@ interface HeaderProps {
 // 로그인 여부 확인 전에는 버튼을 그리지 않는다 (관리자에게 '로그인'이 잠깐 보이는 것 방지)
 type AuthState = { checked: boolean; isAdmin: boolean };
 
+const navigation = [
+  { name: "홈", href: "/" },
+  { name: "포스트", href: "/posts" },
+];
+
+function isActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
+
+const ghostButtonClass =
+  "flex items-center gap-1.5 rounded px-3 py-2 text-sm font-medium text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink disabled:opacity-50";
+
 export function Header({ siteName }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [auth, setAuth] = useState<AuthState>({ checked: false, isAdmin: false });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,37 +70,21 @@ export function Header({ siteName }: HeaderProps) {
     }
   };
 
-  const navigation = [
-    { name: "홈", href: "/" },
-    { name: "포스트", href: "/posts" },
-  ];
-
   // 로그인 후 원래 보던 페이지로 돌아오도록 현재 경로를 넘긴다
   const loginHref = `/login?next=${encodeURIComponent(pathname)}`;
   // /login에서는 헤더 버튼이 중복이므로 숨긴다
   const showAuthButton = auth.checked && pathname !== "/login";
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/80"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="flex h-16 items-center justify-between">
-          {/* 로고 */}
+    <header className="sticky top-0 z-50 border-b border-line bg-paper">
+      <div className="mx-auto max-w-[1120px] px-5 sm:px-8">
+        <div className="flex h-14 items-center justify-between sm:h-16">
+          {/* 워드마크 */}
           <Link
             href="/"
-            className="group flex items-center gap-2"
+            className="font-serif text-lg font-semibold tracking-tight text-ink transition-colors hover:text-accent sm:text-xl"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-bold text-white shadow-lg shadow-primary-500/25">
-              {siteName.charAt(0)}
-            </div>
-            <span className="font-semibold text-zinc-900 transition-colors group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
-              {siteName}
-            </span>
+            {siteName}
           </Link>
 
           {/* 데스크탑 네비게이션 */}
@@ -106,29 +93,24 @@ export function Header({ siteName }: HeaderProps) {
               <Link
                 key={item.name}
                 href={item.href}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                className={`rounded px-3 py-2 text-sm font-medium transition-colors hover:text-ink ${
+                  isActive(pathname, item.href) ? "text-ink" : "text-ink-2"
+                }`}
               >
                 {item.name}
               </Link>
             ))}
 
-            <div className="ml-2 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+            <div className="mx-2 h-[18px] w-px bg-line" />
 
             {showAuthButton &&
               (auth.isAdmin ? (
-                <button
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  className="ml-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-                >
+                <button onClick={handleLogout} disabled={isLoggingOut} className={ghostButtonClass}>
                   <HiOutlineArrowLeftOnRectangle className="h-4 w-4" />
                   로그아웃
                 </button>
               ) : (
-                <Link
-                  href={loginHref}
-                  className="ml-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-                >
+                <Link href={loginHref} className={ghostButtonClass}>
                   <HiOutlineArrowRightOnRectangle className="h-4 w-4" />
                   로그인
                 </Link>
@@ -136,7 +118,7 @@ export function Header({ siteName }: HeaderProps) {
 
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="ml-2 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+              className="ml-1 rounded-md p-2 text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
               aria-label="테마 변경"
             >
               <HiOutlineMoon className="h-5 w-5 dark:hidden" />
@@ -147,25 +129,24 @@ export function Header({ siteName }: HeaderProps) {
           {/* 모바일 메뉴 버튼 */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 md:hidden"
+            className="-mr-2 rounded-md p-2 text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink md:hidden"
+            aria-label={isMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
           >
-            {isMenuOpen ? (
-              <HiOutlineXMark className="h-6 w-6" />
-            ) : (
-              <HiOutlineBars3 className="h-6 w-6" />
-            )}
+            {isMenuOpen ? <HiOutlineXMark className="h-6 w-6" /> : <HiOutlineBars3 className="h-6 w-6" />}
           </button>
         </div>
 
         {/* 모바일 네비게이션 */}
         {isMenuOpen && (
-          <nav className="border-t border-zinc-200 py-4 dark:border-zinc-800 md:hidden">
+          <nav className="border-t border-line py-3 md:hidden">
             <div className="flex flex-col gap-1">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="rounded-lg px-4 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  className={`rounded px-3 py-3 text-sm font-medium transition-colors hover:bg-paper-3 hover:text-ink ${
+                    isActive(pathname, item.href) ? "text-ink" : "text-ink-2"
+                  }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
@@ -179,7 +160,7 @@ export function Header({ siteName }: HeaderProps) {
                       handleLogout();
                     }}
                     disabled={isLoggingOut}
-                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    className="flex items-center gap-2 rounded px-3 py-3 text-sm font-medium text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink disabled:opacity-50"
                   >
                     <HiOutlineArrowLeftOnRectangle className="h-5 w-5" />
                     로그아웃
@@ -187,7 +168,7 @@ export function Header({ siteName }: HeaderProps) {
                 ) : (
                   <Link
                     href={loginHref}
-                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    className="flex items-center gap-2 rounded px-3 py-3 text-sm font-medium text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <HiOutlineArrowRightOnRectangle className="h-5 w-5" />
@@ -200,7 +181,7 @@ export function Header({ siteName }: HeaderProps) {
                   setTheme(theme === "dark" ? "light" : "dark");
                   setIsMenuOpen(false);
                 }}
-                className="mt-2 flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="mt-1 flex items-center gap-2 rounded px-3 py-3 text-sm font-medium text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
               >
                 {theme === "dark" ? (
                   <>

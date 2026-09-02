@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import type { SiteSettings } from "@/lib/types";
+import { pretendard, hahmlet, firaCode } from "./fonts";
 import "./globals.scss";
 
 async function getSiteSettings(): Promise<SiteSettings | null> {
@@ -58,8 +59,13 @@ export default async function RootLayout({
   const settings = await getSiteSettings();
 
   return (
-    <html lang="ko" suppressHydrationWarning data-scroll-behavior="smooth">
-      <body className="flex min-h-screen flex-col bg-white dark:bg-gray-900">
+    <html
+      lang="ko"
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+      className={`${pretendard.variable} ${hahmlet.variable} ${firaCode.variable}`}
+    >
+      <body className="flex min-h-screen flex-col bg-paper text-ink">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Toaster richColors position="top-center" />
           <ScrollToTop />

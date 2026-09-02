@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Button, Input, LoadingSpinner } from "@noopdaa/ui";
+import { Button, LoadingSpinner } from "@noopdaa/ui";
 import { createClient } from "@/lib/supabase/client";
 import { fetchAuthCheck } from "@/lib/auth-client";
 
@@ -21,6 +21,11 @@ type Status =
   | { kind: "checking" }
   | { kind: "guest" }
   | { kind: "admin"; username: string };
+
+const fieldClass =
+  "h-11 w-full rounded-md border bg-paper-2 px-3.5 text-[15px] text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-none focus:ring-0";
+const inkButtonClass =
+  "h-11 rounded-md bg-ink text-sm font-semibold text-paper hover:bg-ink hover:opacity-85 focus:ring-ink";
 
 export default function LoginPage() {
   const [status, setStatus] = useState<Status>({ kind: "checking" });
@@ -107,7 +112,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-[60vh] w-full max-w-md flex-col justify-center px-4 py-16">
+    <div className="mx-auto flex min-h-[60vh] w-full max-w-[400px] flex-col justify-center px-5 py-16">
       {status.kind === "checking" && (
         <div className="flex justify-center">
           <LoadingSpinner size="lg" />
@@ -115,24 +120,31 @@ export default function LoginPage() {
       )}
 
       {status.kind === "admin" && (
-        <div className="rounded-2xl border border-primary-200 bg-primary-50/50 p-6 text-center dark:border-primary-800 dark:bg-primary-900/20">
-          <p className="text-zinc-700 dark:text-zinc-300">
-            <span className="font-semibold text-zinc-900 dark:text-white">
-              {status.username}
-            </span>
-            (으)로 로그인되어 있습니다.
-          </p>
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            이제 댓글이 관리자 이름으로 작성됩니다.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
+        <div className="flex flex-col items-center gap-6 rounded-md border border-line bg-paper-2 px-7 py-8 text-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-base font-semibold text-paper">
+            {status.username.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-[15px] text-ink-2">
+              <span className="font-semibold text-ink">{status.username}</span>
+              (으)로 로그인되어 있습니다.
+            </p>
+            <p className="text-[13px] text-ink-3">
+              이제 댓글이 관리자 이름으로 작성됩니다.
+            </p>
+          </div>
+          <div className="flex gap-2">
             <Link
               href="/"
-              className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex h-10 items-center rounded-md border border-ink px-4 text-sm font-semibold text-ink transition-colors hover:bg-paper-3"
             >
               홈으로
             </Link>
-            <Button onClick={handleLogout} isLoading={isSubmitting}>
+            <Button
+              onClick={handleLogout}
+              isLoading={isSubmitting}
+              className="h-10 rounded-md bg-ink px-4 text-sm font-semibold text-paper hover:bg-ink hover:opacity-85 focus:ring-ink"
+            >
               로그아웃
             </Button>
           </div>
@@ -142,38 +154,48 @@ export default function LoginPage() {
       {status.kind === "guest" && (
         <>
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            <h1 className="font-serif text-[28px] font-semibold tracking-tight text-ink">
               관리자 로그인
             </h1>
-            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-2.5 text-sm text-ink-2">
               댓글을 관리자 이름으로 작성하려면 로그인하세요.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              type="email"
-              label="이메일"
-              placeholder="admin@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
-            />
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[13px] font-medium text-ink-2">이메일</span>
+              <input
+                type="email"
+                placeholder="admin@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+                className={`${fieldClass} ${error ? "border-red-700 dark:border-red-400" : "border-line"}`}
+              />
+            </label>
 
-            <Input
-              type="password"
-              label="비밀번호"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[13px] font-medium text-ink-2">비밀번호</span>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                className={`${fieldClass} ${error ? "border-red-700 dark:border-red-400" : "border-line"}`}
+              />
+            </label>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && (
+              <p className="-mt-1 text-[13px] text-red-700 dark:text-red-400" role="alert">
+                {error}
+              </p>
+            )}
 
-            <Button type="submit" className="w-full" isLoading={isSubmitting}>
+            <Button type="submit" className={`mt-1 w-full ${inkButtonClass}`} isLoading={isSubmitting}>
               로그인
             </Button>
           </form>

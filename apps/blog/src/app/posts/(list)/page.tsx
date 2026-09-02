@@ -3,11 +3,16 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
-import { PostCard } from "@/components/PostCard";
+import { PostRow } from "@/components/PostRow";
 import { SearchBar } from "@/components/SearchBar";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import type { PostWithCategory, Category } from "@/lib/types";
-import { HiOutlineXMark, HiOutlineMagnifyingGlass, HiOutlineChevronRight } from "react-icons/hi2";
+import {
+  HiOutlineXMark,
+  HiOutlineMagnifyingGlass,
+  HiOutlineArrowRight,
+  HiOutlineArrowLeft,
+} from "react-icons/hi2";
 
 export const metadata: Metadata = {
   title: "포스트",
@@ -90,105 +95,141 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     .order("name") as { data: Category[] | null };
 
   const totalPages = Math.ceil((count || 0) / perPage);
+  const hasFilter = Boolean(params.q || params.category || params.tag);
+
+  // 페이지 링크에 현재 필터를 그대로 유지
+  const pageHref = (p: number) =>
+    `/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${
+      params.tag ? `&tag=${encodeURIComponent(params.tag)}` : ""
+    }${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`;
 
   return (
     <div className="min-h-screen">
-      {/* 헤더 영역 */}
-      <div className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white sm:text-4xl">
-            포스트
-          </h1>
-          <p className="mt-3 text-zinc-600 dark:text-zinc-400">
-            {count ? `${count}개의 글이 있습니다` : "아직 작성된 글이 없습니다"}
-          </p>
-        </div>
-      </div>
+      {/* 제목 */}
+      <section className="mx-auto flex max-w-[1120px] flex-col gap-2 px-5 pb-6 pt-10 sm:flex-row sm:items-baseline sm:justify-between sm:px-8 sm:pt-16">
+        <h1 className="font-serif text-[32px] font-medium tracking-tight text-ink sm:text-[40px]">
+          포스트
+        </h1>
+        <p className="text-[15px] text-ink-2">
+          {count ? `${count}개의 글이 있습니다` : "아직 작성된 글이 없습니다"}
+        </p>
+      </section>
 
-      {/* 필터 영역 */}
-      <div className="sticky top-16 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/80">
-        <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CategoryFilter
-              categories={categories || []}
-              currentCategory={params.category}
-            />
+      {/* 필터 바 (헤더 아래 고정) */}
+      <div className="sticky top-14 z-40 border-y border-line bg-paper sm:top-16">
+        <div className="mx-auto flex max-w-[1120px] flex-col gap-2 px-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-8">
+          <CategoryFilter categories={categories || []} currentCategory={params.category} />
+          <div className="pb-3 sm:pb-0">
             <SearchBar defaultValue={params.q} />
           </div>
         </div>
       </div>
 
-      {/* 콘텐츠 영역 */}
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      {/* 콘텐츠 */}
+      <div className="mx-auto max-w-[1120px] px-5 pb-20 pt-2 sm:px-8 sm:pb-24">
         {/* 태그 필터 표시 */}
         {params.tag && (
-          <div className="mb-8 flex items-center gap-2">
-            <span className="text-sm text-zinc-500 dark:text-zinc-400">태그:</span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-100 px-3 py-1.5 text-sm font-medium text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
+          <div className="flex items-center gap-3 py-5">
+            <span className="font-mono text-[11px] tracking-[0.12em] text-ink-3">태그</span>
+            <span className="inline-flex h-[30px] items-center gap-1 rounded border border-ink pl-2.5 pr-1 text-[13px] font-semibold text-ink">
               #{params.tag}
               <Link
                 href="/posts"
-                className="rounded-full p-0.5 transition-colors hover:bg-primary-200 dark:hover:bg-primary-800"
+                className="flex h-[22px] w-[22px] items-center justify-center rounded-sm text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
+                aria-label="태그 필터 해제"
               >
-                <HiOutlineXMark className="h-3.5 w-3.5" />
+                <HiOutlineXMark className="h-3 w-3" />
               </Link>
             </span>
+            <span className="text-[13px] text-ink-3">{count || 0}개의 글</span>
           </div>
         )}
 
         {/* 검색 결과 표시 */}
         {params.q && (
-          <div className="mb-8">
-            <p className="text-zinc-600 dark:text-zinc-400">
-              <span className="font-medium text-zinc-900 dark:text-white">&ldquo;{params.q}&rdquo;</span>
-              {" "}검색 결과 {count || 0}건
-            </p>
-          </div>
+          <p className="py-5 text-[15px] text-ink-2">
+            <strong className="font-semibold text-ink">&ldquo;{params.q}&rdquo;</strong>
+            {" "}검색 결과 {count || 0}건
+          </p>
         )}
 
         {!posts || posts.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 py-20 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-            <HiOutlineMagnifyingGlass className="mx-auto h-12 w-12 text-zinc-400" />
-            <p className="mt-4 text-zinc-500 dark:text-zinc-400">
+          <div className="flex flex-col items-center gap-3.5 border-y border-line py-14 text-ink-3">
+            <HiOutlineMagnifyingGlass className="h-7 w-7" />
+            <p className="text-[15px] text-ink-2">
               {params.q
                 ? `"${params.q}"에 대한 검색 결과가 없습니다.`
                 : "포스트가 없습니다."}
             </p>
-            {(params.q || params.category || params.tag) && (
+            {hasFilter && (
               <Link
                 href="/posts"
-                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink transition-colors hover:text-accent"
               >
                 전체 포스트 보기
-                <HiOutlineChevronRight className="h-4 w-4" />
+                <HiOutlineArrowRight className="h-4 w-4" />
               </Link>
             )}
           </div>
         ) : (
           <>
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="border-b border-line">
               {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostRow key={post.id} post={post} />
               ))}
             </div>
 
             {/* 페이지네이션 */}
             {totalPages > 1 && (
-              <div className="mt-12 flex justify-center gap-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <nav className="flex items-center justify-center gap-1 pt-7" aria-label="페이지">
+                {page > 1 ? (
                   <Link
-                    key={p}
-                    href={`/posts?page=${p}${params.category ? `&category=${params.category}` : ""}${params.tag ? `&tag=${encodeURIComponent(params.tag)}` : ""}${params.q ? `&q=${encodeURIComponent(params.q)}` : ""}`}
-                    className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-all ${
-                      p === page
-                        ? "bg-primary-600 text-white shadow-md shadow-primary-600/25"
-                        : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                    }`}
+                    href={pageHref(page - 1)}
+                    className="inline-flex h-9 items-center gap-1.5 rounded px-2.5 text-[13px] font-medium text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
                   >
-                    {p}
+                    <HiOutlineArrowLeft className="h-3.5 w-3.5" />
+                    이전
                   </Link>
-                ))}
-              </div>
+                ) : (
+                  <span className="inline-flex h-9 items-center gap-1.5 px-2.5 text-[13px] font-medium text-ink-3">
+                    <HiOutlineArrowLeft className="h-3.5 w-3.5" />
+                    이전
+                  </span>
+                )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) =>
+                  p === page ? (
+                    <span
+                      key={p}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded bg-ink font-mono text-[13px] font-medium text-paper"
+                      aria-current="page"
+                    >
+                      {p}
+                    </span>
+                  ) : (
+                    <Link
+                      key={p}
+                      href={pageHref(p)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded font-mono text-[13px] font-medium text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
+                    >
+                      {p}
+                    </Link>
+                  )
+                )}
+                {page < totalPages ? (
+                  <Link
+                    href={pageHref(page + 1)}
+                    className="inline-flex h-9 items-center gap-1.5 rounded px-2.5 text-[13px] font-medium text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
+                  >
+                    다음
+                    <HiOutlineArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                ) : (
+                  <span className="inline-flex h-9 items-center gap-1.5 px-2.5 text-[13px] font-medium text-ink-3">
+                    다음
+                    <HiOutlineArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                )}
+              </nav>
             )}
           </>
         )}

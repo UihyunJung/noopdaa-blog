@@ -32,13 +32,14 @@ export function SearchBar({ defaultValue = "" }: SearchBarProps) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         disabled={isPending}
-        className="w-full rounded-xl border-0 bg-zinc-100 py-3 pl-11 pr-4 text-sm text-zinc-900 placeholder-zinc-500 ring-1 ring-transparent transition-all focus:bg-white focus:ring-2 focus:ring-primary-500 disabled:opacity-50 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-400 dark:focus:bg-zinc-800 sm:w-72"
+        aria-label="검색"
+        className="h-9 w-full rounded-md border border-transparent bg-paper-3 pl-9 pr-3 text-sm text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:bg-paper-2 focus:outline-none focus:ring-0 disabled:opacity-50 sm:w-[280px]"
       />
-      <div className="absolute left-4 top-1/2 -translate-y-1/2">
+      <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
         {isPending ? (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent" />
         ) : (
-          <HiOutlineMagnifyingGlass className="h-4 w-4 text-zinc-400" />
+          <HiOutlineMagnifyingGlass className="h-4 w-4 text-ink-3" />
         )}
       </div>
     </form>
