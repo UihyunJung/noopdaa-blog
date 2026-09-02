@@ -15,20 +15,16 @@ export async function Footer() {
   const siteName = await getSiteName();
 
   return (
-    <footer className="border-t border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-zinc-500 dark:text-zinc-500">
-            © {new Date().getFullYear()} {siteName}. All rights reserved.
-          </p>
-          <Link
-            href="/rss.xml"
-            className="flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
-          >
-            <HiOutlineRss className="h-4 w-4" />
-            RSS
-          </Link>
-        </div>
+    <footer className="border-t border-line">
+      <div className="mx-auto flex max-w-[1120px] flex-col gap-2 px-5 py-6 text-[13px] text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-7">
+        <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
+        <Link
+          href="/rss.xml"
+          className="inline-flex items-center gap-1.5 transition-colors hover:text-ink"
+        >
+          <HiOutlineRss className="h-3.5 w-3.5" />
+          RSS
+        </Link>
       </div>
     </footer>
   );

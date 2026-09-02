@@ -3,9 +3,10 @@
 import { useState, useEffect, useReducer, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Button, Input } from "@noopdaa/ui";
+import { Button } from "@noopdaa/ui";
 import type { Comment } from "@/lib/types";
 import { fetchAuthCheck } from "@/lib/auth-client";
+import { formatDateDot } from "@/lib/format";
 import { HiOutlineArrowUturnLeft, HiOutlinePlus, HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 
 interface CommentsProps {
@@ -19,6 +20,54 @@ interface AdminProfile {
   username: string;
   email: string;
   avatar_url: string | null;
+}
+
+// 폼 입력 공통 스타일 (종이색 배경, 포커스 시 먹색 테두리)
+const fieldClass =
+  "h-[42px] w-full rounded-md border border-line bg-paper-2 px-3 text-sm text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-none focus:ring-0";
+const labelClass = "text-[13px] font-medium text-ink-2";
+const submitButtonClass =
+  "h-10 rounded-md bg-ink px-[18px] text-sm font-semibold text-paper hover:bg-ink hover:opacity-85 focus:ring-ink";
+
+// 관리자 배지 — 인디고 테두리
+function AdminBadge() {
+  return (
+    <span className="inline-flex h-[18px] items-center rounded-[3px] border border-accent px-1.5 text-[11px] font-semibold tracking-wide text-accent">
+      관리자
+    </span>
+  );
+}
+
+// 아바타 — 관리자는 프로필 사진 또는 먹색 원, 방문자는 종이색 원
+function Avatar({
+  name,
+  isAdmin,
+  avatarUrl,
+}: {
+  name: string;
+  isAdmin: boolean;
+  avatarUrl?: string | null;
+}) {
+  if (isAdmin && avatarUrl) {
+    return (
+      <Image
+        src={avatarUrl}
+        alt={name}
+        width={32}
+        height={32}
+        className="h-8 w-8 rounded-full object-cover"
+      />
+    );
+  }
+  return (
+    <div
+      className={`flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold ${
+        isAdmin ? "bg-ink text-paper" : "bg-paper-3 text-ink-2"
+      }`}
+    >
+      {name.charAt(0).toUpperCase() || "?"}
+    </div>
+  );
 }
 
 // CommentForm을 외부로 분리하여 리렌더링 시 unmount 방지
@@ -57,81 +106,73 @@ function CommentForm({
     <form
       ref={formRef}
       onSubmit={(e) => onSubmit(e, parentId)}
-      className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+      className="flex flex-col gap-3.5 rounded-md border border-line bg-paper-2 p-5"
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-zinc-900 dark:text-white">
+        <h3 className="text-sm font-semibold text-ink">
           {parentId ? "답글 작성" : "댓글 작성"}
         </h3>
         <button
           type="button"
           onClick={onCancel}
-          className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          className="text-[13px] font-medium text-ink-2 transition-colors hover:text-ink"
         >
           취소
         </button>
       </div>
 
       {isAdmin ? (
-        <div className="flex items-center gap-3 rounded-xl border border-primary-200 bg-primary-50/50 px-4 py-3 dark:border-primary-800 dark:bg-primary-900/20">
-          {adminProfile?.avatar_url ? (
-            <Image
-              src={adminProfile.avatar_url}
-              alt={adminProfile.username}
-              width={32}
-              height={32}
-              className="rounded-full object-cover ring-2 ring-primary-500/20"
-            />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-medium text-white shadow-md shadow-primary-500/25">
-              {adminProfile?.username?.charAt(0)?.toUpperCase() || "?"}
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-zinc-900 dark:text-white">
-              {adminProfile?.username}
-            </span>
-            <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
-              관리자
-            </span>
-          </div>
+        <div className="flex items-center gap-2.5 rounded-md bg-paper-3 px-3.5 py-2.5">
+          <Avatar
+            name={adminProfile?.username || "?"}
+            isAdmin
+            avatarUrl={adminProfile?.avatar_url}
+          />
+          <span className="text-sm font-semibold text-ink">{adminProfile?.username}</span>
+          <AdminBadge />
+          <span className="ml-auto text-xs text-ink-3">관리자 이름으로 작성됩니다</span>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="이름"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="이름을 입력하세요"
-            required
-          />
-          <Input
-            type="email"
-            label="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="이메일을 입력하세요"
-            required
-          />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5">
+            <span className={labelClass}>이름</span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="이름을 입력하세요"
+              required
+              className={fieldClass}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className={labelClass}>이메일</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="이메일을 입력하세요"
+              required
+              className={fieldClass}
+            />
+          </label>
         </div>
       )}
 
-      <div>
-        <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          내용
-        </label>
+      <label className="flex flex-col gap-1.5">
+        <span className={labelClass}>내용</span>
         <textarea
-          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder-zinc-500"
+          className="min-h-[92px] w-full rounded-md border border-line bg-paper-2 px-3 py-2.5 text-sm leading-relaxed text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-none focus:ring-0"
           rows={3}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder={parentId ? "답글을 작성하세요" : "댓글을 작성하세요"}
           required
         />
-      </div>
+      </label>
 
-      <div className="flex justify-end gap-2">
-        <Button type="submit" isLoading={isSubmitting}>
+      <div className="flex justify-end">
+        <Button type="submit" isLoading={isSubmitting} className={submitButtonClass}>
           {parentId ? "답글 작성" : "댓글 작성"}
         </Button>
       </div>
@@ -366,68 +407,45 @@ export function Comments({ postId }: CommentsProps) {
       <div
         key={comment.id}
         id={`comment-${comment.id}`}
-        className={`${depth > 0 ? "ml-6 border-l-2 border-zinc-200 pl-6 dark:border-zinc-700 sm:ml-10" : ""}`}
+        className={depth === 0 ? "border-b border-line py-6" : ""}
       >
+        {/* 작성 직후 2초간 강조 — 인디고 연한 배경 + 왼쪽 인디고 선 */}
         <div
-          className={`rounded-2xl p-5 transition-all duration-500 ${
+          className={`transition-all duration-500 ${
             isHighlighted
-              ? "ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-zinc-900"
+              ? "-mx-4 rounded-md bg-accent-soft px-4 py-3 shadow-[inset_2px_0_0_var(--accent)]"
               : ""
-          } ${
-            comment.is_admin
-              ? "border border-primary-200 bg-primary-50/50 dark:border-primary-800 dark:bg-primary-900/20"
-              : "border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
           }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              {comment.is_admin ? (
-                publicAdminProfile?.avatar_url ? (
-                  <Image
-                    src={publicAdminProfile.avatar_url}
-                    alt={comment.author_name}
-                    width={32}
-                    height={32}
-                    className="rounded-full object-cover ring-2 ring-primary-500/20"
-                  />
-                ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-medium text-white shadow-md shadow-primary-500/25">
-                    {comment.author_name.charAt(0).toUpperCase()}
-                  </div>
-                )
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-sm font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
-                  {comment.author_name.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-zinc-900 dark:text-white">
-                  {comment.author_name}
-                </span>
-                {comment.is_admin && (
-                  <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
-                    관리자
-                  </span>
-                )}
-              </div>
+              <Avatar
+                name={comment.author_name}
+                isAdmin={!!comment.is_admin}
+                avatarUrl={comment.is_admin ? publicAdminProfile?.avatar_url : null}
+              />
+              <span className="text-sm font-semibold text-ink">{comment.author_name}</span>
+              {comment.is_admin && <AdminBadge />}
             </div>
-            <time className="text-sm text-zinc-500 dark:text-zinc-400">
-              {new Date(comment.created_at).toLocaleDateString("ko-KR")}
+            <time className="font-mono text-xs text-ink-3" dateTime={comment.created_at}>
+              {formatDateDot(comment.created_at)}
             </time>
           </div>
-          <p className="mt-3 whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">{comment.content}</p>
+          <p className="mt-3 whitespace-pre-wrap pl-[42px] text-[15px] leading-relaxed text-ink">
+            {comment.content}
+          </p>
           <button
             onClick={() => handleReplyClick(comment.id)}
-            className="mt-3 flex items-center gap-1 text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+            className="ml-[42px] mt-3 flex items-center gap-1.5 text-[13px] font-medium text-ink-2 transition-colors hover:text-accent"
           >
-            <HiOutlineArrowUturnLeft className="h-4 w-4" />
+            <HiOutlineArrowUturnLeft className="h-3.5 w-3.5" />
             답글
           </button>
         </div>
 
         {/* 이 댓글에 대한 답글 폼 */}
         {replyTo === comment.id && (
-          <div className="mt-4">
+          <div className="ml-[42px] mt-5 border-l border-line pl-5">
             <CommentForm
               {...commentFormProps}
               parentId={comment.id}
@@ -437,9 +455,9 @@ export function Comments({ postId }: CommentsProps) {
           </div>
         )}
 
-        {/* 답글 목록 */}
+        {/* 답글 목록 — 왼쪽 세로선으로 들여쓰기 */}
         {replies.length > 0 && (
-          <div className="mt-4 space-y-4">
+          <div className="ml-[42px] mt-5 flex flex-col gap-5 border-l border-line pl-5">
             {replies.map((reply) => renderComment(reply, depth + 1))}
           </div>
         )}
@@ -448,24 +466,20 @@ export function Comments({ postId }: CommentsProps) {
   };
 
   return (
-    <section className="mt-16">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
-            댓글
-          </h2>
+    <section className="mt-14">
+      <div className="flex items-center justify-between border-b border-ink pb-3.5">
+        <div className="flex items-baseline gap-2.5">
+          <h2 className="font-serif text-[22px] font-semibold text-ink">댓글</h2>
           {comments.length > 0 && (
-            <span className="rounded-full bg-primary-100 px-2.5 py-1 text-sm font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
-              {comments.length}
-            </span>
+            <span className="font-mono text-[13px] text-ink-3">{comments.length}</span>
           )}
         </div>
         {!showCommentForm && !replyTo && (
           <button
             onClick={handleShowCommentForm}
-            className="flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-primary-600/25 transition-all hover:bg-primary-500 hover:shadow-lg"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-ink px-3.5 text-[13px] font-semibold text-ink transition-colors hover:bg-paper-3"
           >
-            <HiOutlinePlus className="h-4 w-4" />
+            <HiOutlinePlus className="h-3.5 w-3.5" />
             댓글 쓰기
           </button>
         )}
@@ -473,7 +487,7 @@ export function Comments({ postId }: CommentsProps) {
 
       {/* 댓글 작성 폼 (상단) */}
       {showCommentForm && (
-        <div className="mt-6">
+        <div className="mt-5">
           <CommentForm
             {...commentFormProps}
             onCancel={handleCancelComment}
@@ -484,15 +498,11 @@ export function Comments({ postId }: CommentsProps) {
 
       {/* 댓글 목록 */}
       {comments.length > 0 ? (
-        <div className="mt-8 space-y-6">
-          {rootComments.map((comment) => renderComment(comment))}
-        </div>
+        <div>{rootComments.map((comment) => renderComment(comment))}</div>
       ) : (
-        <div className="mt-8 rounded-2xl border border-zinc-200 bg-zinc-50/50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-800/30">
-          <HiOutlineChatBubbleLeftRight className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-600" />
-          <p className="mt-4 text-zinc-500 dark:text-zinc-400">
-            아직 댓글이 없습니다. 첫 댓글을 남겨보세요!
-          </p>
+        <div className="flex flex-col items-center gap-3 border-b border-line py-11 text-ink-3">
+          <HiOutlineChatBubbleLeftRight className="h-7 w-7" />
+          <p className="text-sm">아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>
         </div>
       )}
     </section>

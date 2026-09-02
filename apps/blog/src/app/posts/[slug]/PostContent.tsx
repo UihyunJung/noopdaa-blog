@@ -10,9 +10,10 @@ interface PostContentProps {
   content: string;
 }
 
+// 본문 스타일은 globals.scss의 .prose 오버라이드에서 관리 (색은 CSS 변수로 라이트/다크 전환)
 export function PostContent({ content }: PostContentProps) {
   return (
-    <div className="prose prose-lg max-w-none prose-headings:scroll-mt-24 prose-headings:font-bold prose-headings:text-zinc-900 prose-p:text-zinc-700 prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline prose-blockquote:border-l-primary-500 prose-blockquote:text-zinc-600 prose-code:rounded-md prose-code:bg-zinc-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-zinc-800 prose-code:before:content-none prose-code:after:content-none prose-pre:rounded-xl prose-pre:bg-zinc-900 prose-img:rounded-2xl prose-img:shadow-lg dark:prose-invert dark:prose-headings:text-white dark:prose-p:text-zinc-300 dark:prose-a:text-primary-400 dark:prose-blockquote:text-zinc-400 dark:prose-code:bg-zinc-800 dark:prose-code:text-zinc-200">
+    <div className="prose max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         // rehype-slug: 헤딩 id 생성 (github-slugger 기반 — TableOfContents와 동일 알고리즘)

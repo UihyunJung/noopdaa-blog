@@ -2,24 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+// 디자인 토큰 — "잉크와 여백": 종이색 배경 + 먹색 글자, 인디고(primary)는 강조에만
+// Tailwind에서는 bg-paper / text-ink-2 / border-line / text-accent 처럼 쓴다 (packages/config/tailwind.config.ts)
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
-  --card-bg: #ffffff;
-  --border-color: #e4e4e7;
+  --paper: #f8f7f4;
+  --paper-2: #ffffff;
+  --paper-3: #efede7;
+  --ink: #1a1917;
+  --ink-2: #5b5955;
+  --ink-3: #8a8780;
+  --line: #e5e2da;
+  --accent: #4f46e5;
+  --accent-soft: #eef2ff;
+  --pre-bg: #1a1917;
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card-bg: #18181b;
-  --border-color: #27272a;
+  --paper: #0f0f0e;
+  --paper-2: #161615;
+  --paper-3: #1e1e1c;
+  --ink: #f2f0eb;
+  --ink-2: #a9a6a0;
+  --ink-3: #78756f;
+  --line: #2a2926;
+  --accent: #818cf8;
+  --accent-soft: rgba(129, 140, 248, 0.14);
+  --pre-bg: #1e1e1c;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-pretendard), system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-pretendard), "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
 }
 
 // 부드러운 스크롤
@@ -27,60 +43,89 @@ html {
   scroll-behavior: smooth;
 }
 
-// 프로즈 스타일 오버라이드 - 모던한 느낌
+// 본문 프로즈 — 세리프 소제목, 카드·그림자 없이 선으로 구획
 .prose {
   max-width: none;
+  font-size: 17px;
+  line-height: 1.85;
+
+  --tw-prose-body: var(--ink);
+  --tw-prose-headings: var(--ink);
+  --tw-prose-lead: var(--ink-2);
+  --tw-prose-links: var(--accent);
+  --tw-prose-bold: var(--ink);
+  --tw-prose-counters: var(--ink-3);
+  --tw-prose-bullets: var(--ink-3);
+  --tw-prose-hr: var(--line);
+  --tw-prose-quotes: var(--ink-2);
+  --tw-prose-quote-borders: var(--accent);
+  --tw-prose-captions: var(--ink-3);
+  --tw-prose-code: var(--ink);
+  --tw-prose-pre-code: #f2f0eb;
+  --tw-prose-pre-bg: var(--pre-bg);
+  --tw-prose-th-borders: var(--line);
+  --tw-prose-td-borders: var(--line);
 
   h2, h3, h4 {
-    @apply scroll-mt-24 font-bold tracking-tight;
+    @apply scroll-mt-24 font-serif font-semibold tracking-tight;
   }
 
   h2 {
-    @apply mt-12 mb-6 text-2xl;
+    @apply mb-5 mt-14 border-t border-ink pt-5 text-[28px] leading-[1.35];
   }
 
   h3 {
-    @apply mt-8 mb-4 text-xl;
+    @apply mb-4 mt-10 text-[22px] leading-[1.4];
   }
 
   p {
-    @apply leading-relaxed;
+    @apply mb-7 mt-0;
   }
 
   pre {
-    @apply rounded-xl bg-zinc-900 p-5 shadow-lg;
+    @apply rounded-md p-5 text-[14px] leading-relaxed shadow-none;
   }
 
   code {
-    @apply rounded-md bg-zinc-100 px-1.5 py-0.5 text-sm font-normal text-zinc-800 before:content-none after:content-none dark:bg-zinc-800 dark:text-zinc-200;
+    @apply rounded px-1.5 py-0.5 text-[0.9em] font-normal before:content-none after:content-none;
+    background: var(--paper-3);
   }
 
   pre code {
-    @apply bg-transparent p-0 text-zinc-100;
+    @apply bg-transparent p-0;
   }
 
   img {
-    @apply rounded-xl shadow-md;
+    @apply rounded border border-line shadow-none;
   }
 
   a {
-    @apply font-medium text-primary-600 no-underline transition-colors hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300;
+    @apply font-medium no-underline transition-colors;
+
+    &:hover {
+      @apply underline;
+    }
   }
 
   blockquote {
-    @apply border-l-4 border-primary-500 bg-primary-50 py-1 italic dark:bg-primary-950/30;
+    @apply border-l-2 py-1 pl-5 not-italic;
+  }
+
+  blockquote p:first-of-type::before,
+  blockquote p:last-of-type::after {
+    content: none;
   }
 
   ul, ol {
-    @apply my-4 space-y-2;
+    @apply my-5 space-y-1.5;
   }
 
   li {
-    @apply leading-relaxed;
+    @apply my-0;
   }
 
   hr {
-    @apply my-12 border-zinc-200 dark:border-zinc-800;
+    @apply my-12;
   }
 }
 
@@ -89,7 +134,7 @@ html {
   @apply bg-transparent;
 }
 
-// 모던 스크롤바
+// 스크롤바
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -100,19 +145,20 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-zinc-300 dark:bg-zinc-700;
+  border-radius: 9999px;
+  background: var(--line);
 
   &:hover {
-    @apply bg-zinc-400 dark:bg-zinc-600;
+    background: var(--ink-3);
   }
 }
 
 // 선택 스타일
 ::selection {
-  @apply bg-primary-200 dark:bg-primary-900;
+  background: var(--accent-soft);
 }
 
-// 포커스 스타일 리셋
+// 포커스 스타일
 *:focus-visible {
-  @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900;
+  @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-paper;
 }

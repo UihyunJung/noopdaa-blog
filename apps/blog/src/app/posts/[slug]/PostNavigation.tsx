@@ -10,22 +10,16 @@ export function PostNavigation({ prevPost, nextPost }: PostNavigationProps) {
   if (!prevPost && !nextPost) return null;
 
   return (
-    <nav className="my-10 grid gap-4 sm:grid-cols-2">
+    <nav className="grid gap-6 border-b border-line py-7 sm:grid-cols-2 sm:gap-8" aria-label="이전·다음 글">
       {prevPost ? (
-        <Link
-          href={`/posts/${prevPost.slug}`}
-          className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 transition-all hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-primary-700"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-primary-950/30" />
-          <div className="relative">
-            <span className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-              <HiOutlineArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-              이전 포스트
-            </span>
-            <p className="mt-2 line-clamp-2 font-medium text-zinc-900 transition-colors group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
-              {prevPost.title}
-            </p>
-          </div>
+        <Link href={`/posts/${prevPost.slug}`} className="group flex flex-col gap-2.5">
+          <span className="inline-flex items-center gap-1.5 text-xs text-ink-3">
+            <HiOutlineArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+            이전 글
+          </span>
+          <span className="line-clamp-2 font-serif text-[17px] font-semibold leading-[1.45] text-ink transition-colors group-hover:text-accent">
+            {prevPost.title}
+          </span>
         </Link>
       ) : (
         <div />
@@ -34,18 +28,15 @@ export function PostNavigation({ prevPost, nextPost }: PostNavigationProps) {
       {nextPost && (
         <Link
           href={`/posts/${nextPost.slug}`}
-          className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 text-right transition-all hover:border-primary-300 hover:shadow-lg hover:shadow-primary-500/5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-primary-700"
+          className="group flex flex-col items-end gap-2.5 text-right"
         >
-          <div className="absolute inset-0 bg-gradient-to-l from-primary-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-primary-950/30" />
-          <div className="relative">
-            <span className="flex items-center justify-end gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-              다음 포스트
-              <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </span>
-            <p className="mt-2 line-clamp-2 font-medium text-zinc-900 transition-colors group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
-              {nextPost.title}
-            </p>
-          </div>
+          <span className="inline-flex items-center gap-1.5 text-xs text-ink-3">
+            다음 글
+            <HiOutlineArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </span>
+          <span className="line-clamp-2 font-serif text-[17px] font-semibold leading-[1.45] text-ink transition-colors group-hover:text-accent">
+            {nextPost.title}
+          </span>
         </Link>
       )}
     </nav>
