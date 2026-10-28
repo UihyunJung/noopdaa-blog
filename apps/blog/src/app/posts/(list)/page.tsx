@@ -135,7 +135,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
               #{params.tag}
               <Link
                 href="/posts"
-                className="flex h-[22px] w-[22px] items-center justify-center rounded-sm text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
+                className="flex h-[22px] w-[22px] items-center justify-center rounded-xs text-ink-2 transition-colors hover:bg-paper-3 hover:text-ink"
                 aria-label="태그 필터 해제"
               >
                 <HiOutlineXMark className="h-3 w-3" />

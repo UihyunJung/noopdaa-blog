@@ -24,7 +24,7 @@ interface AdminProfile {
 
 // 폼 입력 공통 스타일 (종이색 배경, 포커스 시 먹색 테두리)
 const fieldClass =
-  "h-[42px] w-full rounded-md border border-line bg-paper-2 px-3 text-sm text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-none focus:ring-0";
+  "h-[42px] w-full rounded-md border border-line bg-paper-2 px-3 text-sm text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-hidden focus:ring-0";
 const labelClass = "text-[13px] font-medium text-ink-2";
 const submitButtonClass =
   "h-10 rounded-md bg-ink px-[18px] text-sm font-semibold text-paper hover:bg-ink hover:opacity-85 focus:ring-ink";
@@ -162,7 +162,7 @@ function CommentForm({
       <label className="flex flex-col gap-1.5">
         <span className={labelClass}>내용</span>
         <textarea
-          className="min-h-[92px] w-full rounded-md border border-line bg-paper-2 px-3 py-2.5 text-sm leading-relaxed text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-none focus:ring-0"
+          className="min-h-[92px] w-full rounded-md border border-line bg-paper-2 px-3 py-2.5 text-sm leading-relaxed text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-hidden focus:ring-0"
           rows={3}
           value={content}
           onChange={(e) => setContent(e.target.value)}

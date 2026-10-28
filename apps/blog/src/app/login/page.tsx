@@ -23,7 +23,7 @@ type Status =
   | { kind: "admin"; username: string };
 
 const fieldClass =
-  "h-11 w-full rounded-md border bg-paper-2 px-3.5 text-[15px] text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-none focus:ring-0";
+  "h-11 w-full rounded-md border bg-paper-2 px-3.5 text-[15px] text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:outline-hidden focus:ring-0";
 const inkButtonClass =
   "h-11 rounded-md bg-ink text-sm font-semibold text-paper hover:bg-ink hover:opacity-85 focus:ring-ink";
 

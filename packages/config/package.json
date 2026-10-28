@@ -4,11 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./tailwind": "./tailwind.config.ts",
+    "./tailwind.css": "./tailwind.css",
     "./tsconfig/base": "./tsconfig.base.json",
     "./tsconfig/nextjs": "./tsconfig.nextjs.json"
-  },
-  "devDependencies": {
-    "tailwindcss": "^3.4.17"
   }
 }

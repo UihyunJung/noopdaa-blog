@@ -33,7 +33,7 @@ export function SearchBar({ defaultValue = "" }: SearchBarProps) {
         onChange={(e) => setQuery(e.target.value)}
         disabled={isPending}
         aria-label="검색"
-        className="h-9 w-full rounded-md border border-transparent bg-paper-3 pl-9 pr-3 text-sm text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:bg-paper-2 focus:outline-none focus:ring-0 disabled:opacity-50 sm:w-[280px]"
+        className="h-9 w-full rounded-md border border-transparent bg-paper-3 pl-9 pr-3 text-sm text-ink transition-colors placeholder:text-ink-3 focus:border-ink focus:bg-paper-2 focus:outline-hidden focus:ring-0 disabled:opacity-50 sm:w-[280px]"
       />
       <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
         {isPending ? (

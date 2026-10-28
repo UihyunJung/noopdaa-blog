@@ -158,8 +158,10 @@ packages/
 - SEO 출력(canonical·sitemap·RSS·robots·JSON-LD)은 전부 `NEXT_PUBLIC_SITE_URL` 하나에서 파생된다. 도메인 변경 시 이 변수만 바꾸고 재배포하면 된다
 
 **디자인 시스템 (blog, "잉크와 여백"):**
-- 색은 `globals.scss`의 CSS 변수(`--paper`, `--ink`, `--line`, `--accent` 등)로 정의하고 `.dark`에서 값만 바꾼다. Tailwind에서는 `bg-paper` `bg-paper-2` `bg-paper-3` `text-ink` `text-ink-2` `text-ink-3` `border-line` `text-accent` `bg-accent-soft`로 쓴다 (`packages/config/tailwind.config.ts`). 색마다 `dark:` 변형을 붙이지 않는다
-- 변수 기반 색이라 `bg-ink/60` 같은 투명도 수식어는 동작하지 않는다. 필요하면 `opacity-*`를 쓴다
+- 색은 `globals.css`의 CSS 변수(`--paper`, `--ink`, `--line`, `--accent` 등)로 정의하고 `.dark`에서 값만 바꾼다. Tailwind에서는 `bg-paper` `bg-paper-2` `bg-paper-3` `text-ink` `text-ink-2` `text-ink-3` `border-line` `text-accent` `bg-accent-soft`로 쓴다. 색마다 `dark:` 변형을 붙이지 않는다
+- **Tailwind v4 (CSS-first)**: JS config 없음. 공유 테마는 `packages/config/tailwind.css`(`@theme inline` 토큰, `dark` 커스텀 변형, v3 Preflight 호환 레이어)이고 각 앱 `globals.css`가 `@import "tailwindcss"` 뒤에 가져온다. `packages/ui`의 클래스는 `@source`로 스캔 경로에 포함돼 있다
+- v4에서는 **레이어 밖 일반 규칙이 유틸리티보다 항상 우선**한다. `body`·`:root` 같은 기본 스타일은 반드시 `@layer base` 안에 두고, 유틸리티를 의도적으로 덮어쓰는 규칙(`.prose` 오버라이드 등)만 레이어 밖에 둔다. `space-y-*`는 `:where()`로 감싸져 특이도가 낮으므로, 자식에 margin 규칙이 있는 곳(prose 목록)에서는 `li + li` 같은 명시적 선택자를 쓴다
+- 토큰이 `@theme inline`이라 `bg-ink/60` 같은 투명도 수식어도 `color-mix()`로 동작한다. v3→v4 리네임(`shadow-sm→shadow-xs`, `rounded-sm→rounded-xs`, `outline-none→outline-hidden`, `bg-gradient-to-*→bg-linear-to-*`)이 적용돼 있으니 새 코드도 v4 이름을 쓴다
 - 폰트는 `apps/blog/src/app/fonts.ts`에서 next/font로 로드한다: 본문 Pretendard(`font-sans`, npm `pretendard` 패키지의 woff2를 `next/font/local`로 셀프 호스팅), 제목 Hahmlet(`font-serif`), 날짜·메타 Fira Code(`font-mono`)
 - 카드·그림자·블러·그라데이션 대신 1px 선(`border-line`)과 여백으로 구획한다. 인디고(`accent`)는 카테고리 라벨·링크 hover·활성 상태·관리자 배지에만 쓴다. 기본 버튼은 먹색(`bg-ink text-paper`)
 - 날짜 표시는 `formatDateDot()` - `@/lib/format` ("2026.04.04", KST). 발췌·메타 설명·RSS는 `stripMarkdown()`/`makeExcerpt()` - `@noopdaa/ui`로 마크다운 기호를 걷어낸 뒤 쓴다 (admin 자동 발췌도 동일)
@@ -167,7 +169,7 @@ packages/
 - 디자인 시안(캔버스)과 코드가 어긋나면 코드가 아니라 시안을 먼저 의심한다. 시안은 썸네일을 자리표시자로 그렸다
 
 **다크모드:**
-- `next-themes` 사용, class 기반 (`darkMode: "class"`)
+- `next-themes` 사용, class 기반. v4에서는 `packages/config/tailwind.css`의 `@custom-variant dark (&:where(.dark, .dark *))`가 `dark:` 변형을 정의한다
 - 커스텀 primary 컬러 팔레트 (indigo 계열)
 
 ## 데이터베이스 스키마

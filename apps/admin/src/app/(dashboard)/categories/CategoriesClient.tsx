@@ -100,7 +100,7 @@ export function CategoriesClient({ initialCategories }: CategoriesClientProps) {
                 설명
               </label>
               <textarea
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-primary-500 focus:outline-hidden focus:ring-2 focus:ring-primary-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

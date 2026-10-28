@@ -8,7 +8,7 @@ import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import type { SiteSettings } from "@/lib/types";
 import { pretendard, hahmlet, firaCode } from "./fonts";
-import "./globals.scss";
+import "./globals.css";
 
 async function getSiteSettings(): Promise<SiteSettings | null> {
   const supabase = await createServerClient();
