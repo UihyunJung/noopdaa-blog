@@ -40,6 +40,6 @@
     "postcss": "^8.5.32",
     "sass": "^1.106.1",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.2"
+    "typescript": "^6.0.3"
   }
 }

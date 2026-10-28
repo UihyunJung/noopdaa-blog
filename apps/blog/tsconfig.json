@@ -1,7 +1,6 @@
 {
   "extends": "@noopdaa/config/tsconfig/nextjs",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
