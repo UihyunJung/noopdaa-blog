@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- RLS 설정
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. 행 단위 제어는 RLS가 담당)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO anon, authenticated, service_role;
+
 CREATE POLICY "Public profiles are viewable by everyone"
   ON profiles FOR SELECT
   USING (true);
@@ -63,6 +66,9 @@ CREATE TABLE IF NOT EXISTS categories (
 -- RLS 설정
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. 행 단위 제어는 RLS가 담당)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.categories TO anon, authenticated, service_role;
+
 CREATE POLICY "Categories are viewable by everyone"
   ON categories FOR SELECT
   USING (true);
@@ -91,6 +97,9 @@ CREATE TABLE IF NOT EXISTS tags (
 
 -- RLS 설정
 ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. 행 단위 제어는 RLS가 담당)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.tags TO anon, authenticated, service_role;
 
 CREATE POLICY "Tags are viewable by everyone"
   ON tags FOR SELECT
@@ -141,6 +150,9 @@ CREATE INDEX IF NOT EXISTS posts_slug_idx ON posts(slug);
 -- RLS 설정
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. 행 단위 제어는 RLS가 담당)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.posts TO anon, authenticated, service_role;
+
 CREATE POLICY "Published posts are viewable by everyone"
   ON posts FOR SELECT
   USING (status = 'published' OR (SELECT auth.role()) = 'authenticated');
@@ -185,6 +197,9 @@ CREATE TABLE IF NOT EXISTS post_tags (
 -- RLS 설정
 ALTER TABLE post_tags ENABLE ROW LEVEL SECURITY;
 
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. 행 단위 제어는 RLS가 담당)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.post_tags TO anon, authenticated, service_role;
+
 CREATE POLICY "Post tags are viewable by everyone"
   ON post_tags FOR SELECT
   USING (true);
@@ -223,6 +238,10 @@ CREATE INDEX IF NOT EXISTS comments_is_approved_idx ON comments(is_approved);
 
 -- RLS 설정
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. anon SELECT는 아래 컬럼 단위 권한으로 관리)
+GRANT INSERT, UPDATE, DELETE ON public.comments TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.comments TO authenticated, service_role;
 
 CREATE POLICY "Approved comments are viewable by everyone"
   ON comments FOR SELECT
@@ -274,6 +293,9 @@ CREATE TABLE IF NOT EXISTS media (
 -- RLS 설정
 ALTER TABLE media ENABLE ROW LEVEL SECURITY;
 
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. 행 단위 제어는 RLS가 담당)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.media TO anon, authenticated, service_role;
+
 CREATE POLICY "Media is viewable by everyone"
   ON media FOR SELECT
   USING (true);
@@ -314,6 +336,9 @@ CREATE INDEX IF NOT EXISTS idx_page_views_post_id ON page_views(post_id);
 -- RLS 설정
 ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;
 
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. 행 단위 제어는 RLS가 담당)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.page_views TO anon, authenticated, service_role;
+
 CREATE POLICY "Allow authenticated read"
   ON page_views FOR SELECT
   TO authenticated
@@ -349,6 +374,9 @@ CREATE TABLE IF NOT EXISTS site_settings (
 
 -- RLS 설정
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+
+-- Data API 접근 권한 (2026-10-30부터 새 테이블에 자동 부여되지 않음. 행 단위 제어는 RLS가 담당)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.site_settings TO anon, authenticated, service_role;
 
 CREATE POLICY "Anyone can read site settings"
   ON site_settings FOR SELECT
