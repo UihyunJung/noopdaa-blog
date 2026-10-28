@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { requireAuthAction, type ActionResult } from "@/lib/auth-actions";
+import type { TablesUpdate } from "@/lib/types";
 
 type ImageType = "hero" | "og";
 
@@ -10,6 +11,12 @@ interface SiteInfoInput {
   siteName: string;
   siteDescription: string;
   siteIntro: string;
+}
+
+// 계산된 키(`[fieldName]`)는 문자열 인덱스 타입으로 넓혀져 supabase-js의 초과 속성 검사에 걸리므로
+// 이미지 종류별로 명시적인 Update 객체를 만든다
+function imageField(type: ImageType, url: string | null): TablesUpdate<"site_settings"> {
+  return type === "hero" ? { hero_image_url: url } : { og_image_url: url };
 }
 
 async function getSettingsId(): Promise<string | null> {
@@ -90,7 +97,7 @@ export async function uploadSiteImage(
   const { error: updateError } = await supabase
     .from("site_settings")
     .update({
-      [fieldName]: publicUrl,
+      ...imageField(type, publicUrl),
       updated_at: new Date().toISOString(),
     })
     .eq("id", settingsId);
@@ -127,7 +134,7 @@ export async function removeSiteImage(type: ImageType): Promise<ActionResult> {
   const { error } = await supabase
     .from("site_settings")
     .update({
-      [fieldName]: null,
+      ...imageField(type, null),
       updated_at: new Date().toISOString(),
     })
     .eq("id", settingsId);
