@@ -37,7 +37,7 @@ export function HourlyChart({ data }: HourlyChartProps) {
                 border: "1px solid var(--tooltip-border, #e5e7eb)",
                 borderRadius: "8px",
               }}
-              formatter={(value: number) => [value.toLocaleString(), "방문"]}
+              formatter={(value) => [Number(value).toLocaleString(), "방문"]}
             />
             <Bar dataKey="views" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
           </BarChart>

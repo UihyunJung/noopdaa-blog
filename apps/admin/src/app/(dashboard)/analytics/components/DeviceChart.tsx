@@ -42,7 +42,7 @@ export function DeviceChart({ data }: DeviceChartProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number) => [value.toLocaleString(), "방문"]}
+              formatter={(value) => [Number(value).toLocaleString(), "방문"]}
               contentStyle={{
                 backgroundColor: "var(--tooltip-bg, #fff)",
                 border: "1px solid var(--tooltip-border, #e5e7eb)",
