@@ -6,7 +6,7 @@ Turborepo 기반의 모던 블로그 플랫폼입니다.
 
 - **프레임워크**: Next.js 16, React 19
 - **언어**: TypeScript
-- **스타일링**: TailwindCSS, Sass
+- **스타일링**: Tailwind CSS v4 (CSS-first 테마)
 - **데이터베이스**: Supabase (PostgreSQL + Auth + Storage)
 - **빌드**: Turborepo, pnpm
 - **최적화**: React Compiler
@@ -23,14 +23,14 @@ apps/
 packages/
 ├── ui/            # 공유 UI 컴포넌트 (Button, Input, Card, Spinner, LoadingSpinner, ConfirmModal)
 ├── database/      # Supabase 타입 정의 + 공유 타입 별칭
-└── config/        # 공유 설정 (TypeScript, TailwindCSS)
+└── config/        # 공유 설정 (TypeScript, Tailwind 테마)
 ```
 
 ## 시작하기
 
 ### 요구사항
 
-- Node.js >= 18
+- Node.js >= 20.9 (개발은 `.nvmrc`의 24 LTS 기준)
 - pnpm 9.x
 
 ### 설치
@@ -103,7 +103,7 @@ pnpm build
 - AI 커버 이미지 자동 생성 (Groq으로 프롬프트 생성 → Pollinations.ai로 이미지 생성)
 - 카테고리/태그/댓글/미디어 관리
 - 방문자 통계 대시보드 (일별 조회수, 디바이스, 브라우저, 유입경로)
-- 블로그 설정 (히어로 슬라이드, OG 이미지)
+- 블로그 설정 (대문 이미지, 좌우명·한 줄 소개, 추천 글, OG 이미지)
 - 세션 기반 인증 + 비활성 타임아웃
 
 ## 라이선스
